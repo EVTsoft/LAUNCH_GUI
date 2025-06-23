@@ -18,8 +18,8 @@ class CModDraw():
     # Отрисовка фигуры с переводом координат
     def DrawFig(self,rzm,xy,Angle,el_fill,el_outline,fig='R'):
          # Рисуем компонент
-        vl=self.__c.tr(xy.vl(rzm,Angle))
-        np=self.__c.tr(xy.np(rzm,Angle))
+        vl=self.__c.trvl(xy,rzm,Angle)
+        np=self.__c.trnp(xy,rzm,Angle)
         match fig:
             case 'R':
                 self.__canvas.create_rectangle(vl.x,vl.y,np.x,np.y, fill=el_fill, outline=el_outline)
@@ -29,7 +29,7 @@ class CModDraw():
     # Печать текста на плате с переводом координат
     def DrawText(self,xy,ang,txt,txt_fill):
         dt=self.__c.tr(xy)
-        textID = self.__canvas.create_text(dt.x,dt.y, angle=ang, fill=txt_fill)
+        textID = self.__canvas.create_text(dt.x,dt.y, angle=(ang+self.__c.angle)%360, fill=txt_fill)
         self.__canvas.itemconfig(textID, text = txt)
 
     # Отрисовка электронного копонента

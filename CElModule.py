@@ -242,7 +242,7 @@ class CElModule():
                 #print(dz_rep)
                 CMDraw.RepDraw(dz_rep,1.)
             lst_rep.sort(key=lambda d : d.XY.lvector(side,CXY(0.,0.),self.__SizeBrd))
-            print('')
+            #print('')
             #for dd in lst_rep: print (dd)
             CMDraw.RepFL(CXY(1.1,1.1),lst_rep[0],lst_rep[-1])  
             #print(self.__SizeBrd)   
@@ -281,8 +281,18 @@ def main():
     #spec=CElModule.Pick(nmodule,LAUNCHDIR)
     spec=CElModule(nmodule,LAUNCHDIR)
     #spec.RepDz()
+
+
     spec.RepSMDprm(0,'F')
     spec.RepSMDprm(0,'F',90)
+    spec.RepSMDprm(0,'F',180)
+    spec.RepSMDprm(0,'F',270)
+    spec.RepSMDprm(0,'B')
+    spec.RepSMDprm(0,'B',90)
+    spec.RepSMDprm(0,'B',180)
+    spec.RepSMDprm(0,'B',270)
+    
+    
     #spec.RepSMDprm(0,'B')
     #print(spec.report())
     #print(spec.StdRepIsp(3))

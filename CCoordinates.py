@@ -2,22 +2,6 @@ import math
 
 class CXY():
 
-  def vl(self,half,angle=0):
-    xy=None
-    if((angle==90) | (angle==270)):
-        xy=CXY(self.x-half.y,self.y+half.x)
-    else:
-        xy=CXY(self.x-half.x,self.y+half.y)
-    return xy
-  
-  def np(self,half,angle=0):
-    xy=None
-    if((angle==90) | (angle==270)):
-        xy=CXY(self.x+half.y,self.y-half.x)
-    else:
-        xy=CXY(self.x+half.x,self.y-half.y)
-    return xy
-
   def __init__(self,x=0.,y=0.):
       self.__x=x
       self.__y=y
@@ -115,6 +99,8 @@ class CXY():
   def y(self):
     return self.__y
   
+
+
 class tCXY():
     def __init__(self,scale,brd,side,angle):
         self.__scale=scale
@@ -122,15 +108,7 @@ class tCXY():
         self.__side=side
         self.__angle=angle
 
-    def tr(self,xy):
-        y=round((self.__brd.y-xy.y)*self.__scale)
-        if self.__side=='F':
-           x=xy.x
-        else:
-           x=self.__brd.x-xy.x
-        x=round(x*self.__scale)   
-        return CXY(x,y)           
-
+    
     @property
     def brd(self):
         return self.__brd
@@ -151,6 +129,7 @@ class tCXY():
             y=self.__brd.x
         return round(self.__scale*y)
     
+
     @property
     def angle(self):
         return self.__angle
@@ -162,7 +141,49 @@ class tCXY():
         if (self.__angle==90) | (self.__angle==270):
             x=self.__brd.y
             y=self.__brd.x
-        return f'{round(sc*self.__scale*x)}x{round(sc*self.__scale*y)}'        
+        return f'{round(sc*self.__scale*x)}x{round(sc*self.__scale*y)}'    
+    
+
+    def tr(self,xy):
+        x=0
+        y=0
+        match self.__angle:
+            case 0:
+                x=xy.x
+                y=self.__brd.y-xy.y
+            case 90:
+                x=self.__brd.y-xy.y
+                y=self.__brd.x-xy.x
+            case 180:
+                x=self.__brd.x-xy.x
+                y=xy.y
+            case 270:
+                x=xy.y
+                y=xy.x
+            case _:
+                print('ВНИМАНИЕ! Ошибка угла поворота платы ****************************************')        
+        x=round(x*self.__scale)   
+        y=round(y*self.__scale)   
+        return CXY(x,y)           
+
+
+    def trvl(self,Txy,half,angle=0):
+        xy=None
+        if((angle==90) | (angle==270)):
+            xy=CXY(Txy.x-half.y,Txy.y+half.x)
+        else:
+            xy=CXY(Txy.x-half.x,Txy.y+half.y)
+        return self.tr(xy)
+    
+
+    def trnp(self,Txy,half,angle=0):
+        xy=None
+        if((angle==90) | (angle==270)):
+            xy=CXY(Txy.x+half.y,Txy.y-half.x)
+        else:
+            xy=CXY(Txy.x+half.x,Txy.y-half.y)
+        return self.tr(xy)
+    
 
   
 def main():
