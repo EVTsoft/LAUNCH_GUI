@@ -213,11 +213,10 @@ class CElModule():
         SCALE=20
         sp=self.GetIsp(nIsp)
         #----------------------
-        for el in sp:
-            print(el)
+        #for el in sp: print(el)
         #----------------------
         retSMT=sp.rep_SMD_nozzle()
-        print(retSMT[0])   
+        #print(retSMT[0])   
         #----------------------
         c=tCXY(SCALE,self.__SizeBrd,side,angle)
         # Объект графического отображения       
@@ -225,29 +224,28 @@ class CElModule():
         #----------------------
         # Вывод элементов по дезигнаторам
         for key in retSMT[1].keys():
-            print(f'>>{key}')
+            #print(f'>>{key}')
             for el in retSMT[1][key]:
-                print('   ',el)
+                #print('   ',el)
                 for dz in self.__PerEl[el.UID]:
                     if dz.Layer==side :
-                        print('                       ',dz)
+                        #print('                       ',dz)
                         CMDraw.DzDraw(dz,CXY(el.mt.x,el.mt.y)/2.)
         #--------------
         # Поиск, вывод и сортировка реперных знаков
         spREP=sp.rep_Rep()
         #print (len(spREP))
         for rep in spREP:
-            print(rep)#,'   ',rep.mt.fp[:5])
+            #print(rep)#,'   ',rep.mt.fp[:5])
             lst_rep=[dz for dz in self.__PerEl[rep.UID] if (dz.Layer==side) | (rep.mt.fp[:5]=='REP-D')]
             for dz_rep in  lst_rep:
-                print(dz_rep)
+                #print(dz_rep)
                 CMDraw.RepDraw(dz_rep,1.)
             lst_rep.sort(key=lambda d : d.XY.lvector(side,CXY(0.,0.),self.__SizeBrd))
             print('')
-            for dd in lst_rep:
-                print (dd)
+            #for dd in lst_rep: print (dd)
             CMDraw.RepFL(CXY(1.1,1.1),lst_rep[0],lst_rep[-1])  
-            print(self.__SizeBrd)   
+            #print(self.__SizeBrd)   
         #--------------
         CMDraw.RootLoop()
         #
@@ -285,7 +283,7 @@ def main():
     #spec.RepDz()
     spec.RepSMDprm(0,'F')
     spec.RepSMDprm(0,'F',90)
-    spec.RepSMDprm(0,'B')
+    #spec.RepSMDprm(0,'B')
     #print(spec.report())
     #print(spec.StdRepIsp(3))
     #print(spec.StdRepIsp(1))

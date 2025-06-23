@@ -138,16 +138,31 @@ class tCXY():
 
     @property
     def width(self):
-        return round(self.__scale*self.__brd.x)
+        x=self.__brd.x
+        if (self.__angle==90) | (self.__angle==270):
+            x=self.__brd.y
+        return round(self.__scale*x)
     
 
     @property
     def height(self):
-        return round(self.__scale*self.__brd.y)
+        y=self.__brd.y
+        if (self.__angle==90) | (self.__angle==270):
+            y=self.__brd.x
+        return round(self.__scale*y)
+    
+    @property
+    def angle(self):
+        return self.__angle
     
     
     def size(self,sc):
-     return f'{round(sc*self.__scale*self.__brd.x)}x{round(sc*self.__scale*self.__brd.y)}'        
+        x=self.__brd.x
+        y=self.__brd.y
+        if (self.__angle==90) | (self.__angle==270):
+            x=self.__brd.y
+            y=self.__brd.x
+        return f'{round(sc*self.__scale*x)}x{round(sc*self.__scale*y)}'        
 
   
 def main():
