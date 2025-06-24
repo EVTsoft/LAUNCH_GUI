@@ -147,21 +147,38 @@ class tCXY():
     def tr(self,xy):
         x=0
         y=0
-        match self.__angle:
-            case 0:
-                x=xy.x
-                y=self.__brd.y-xy.y
-            case 90:
-                x=self.__brd.y-xy.y
-                y=self.__brd.x-xy.x
-            case 180:
-                x=self.__brd.x-xy.x
-                y=xy.y
-            case 270:
-                x=xy.y
-                y=xy.x
-            case _:
-                print('ВНИМАНИЕ! Ошибка угла поворота платы ****************************************')        
+        if(self.__side=='F'):
+            match self.__angle:
+                case 0:
+                    x=xy.x
+                    y=self.__brd.y-xy.y
+                case 90:
+                    x=self.__brd.y-xy.y
+                    y=self.__brd.x-xy.x
+                case 180:
+                    x=self.__brd.x-xy.x
+                    y=xy.y
+                case 270:
+                    x=xy.y
+                    y=xy.x
+                case _:
+                    print('ВНИМАНИЕ! Ошибка угла поворота платы side F *********************************')  
+        else:
+             match self.__angle:
+                case 0:
+                    x=self.__brd.x-xy.x
+                    y=self.__brd.y-xy.y
+                case 90:
+                    x=xy.y
+                    y=self.__brd.x-xy.x
+                case 180:
+                    x=xy.x
+                    y=xy.y
+                case 270:
+                    x=self.__brd.y-xy.y
+                    y=xy.x
+                case _:
+                    print('ВНИМАНИЕ! Ошибка угла поворота платы side B *********************************')                 
         x=round(x*self.__scale)   
         y=round(y*self.__scale)   
         return CXY(x,y)           
