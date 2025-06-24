@@ -3,7 +3,7 @@ from CDesignator import CDesignator
 from tkinter import *
 # Класс отрисовки электронного модуля
 class CModDraw():
-    def __init__(self,ModName,c):
+    def __init__(self,ModName,c,):
         self.__ModName=ModName
         self.__c=c
         #
@@ -28,12 +28,15 @@ class CModDraw():
             
     # Печать текста на плате с переводом координат
     def DrawText(self,xy,ang,txt,txt_fill):
+        angle_turn=(ang+self.__c.angle)%360
+        if self.__c.side=='B':
+            angle_turn=(360-((360+self.__c.angle-ang)%360))%360
         dt=self.__c.tr(xy)
-        textID = self.__canvas.create_text(dt.x,dt.y, angle=(ang+self.__c.angle)%360, fill=txt_fill)
+        textID = self.__canvas.create_text(dt.x,dt.y, angle=angle_turn, fill=txt_fill)
         self.__canvas.itemconfig(textID, text = txt)
 
     # Отрисовка электронного копонента
-    def DzDraw(self,dz,rzm):
+    def DzDraw(self,dz,rzm,nozzle=""):
         el_fill="#80CBC4"
         el_outline="#004D40"
         match dz.Des[0]:
@@ -62,9 +65,30 @@ class CModDraw():
         self.DrawFig(rzm,dz.XY,dz.Angle,el_fill,el_outline)
         # Рисуем ключ
         self.DrawFig(CXY(.2,.2),dz.XY1p,dz.Angle,"#F17F7F","#02231D")
+        # Рисуем отпечаток головки по координате установки
+        d0=0.
+        d1=0.
+        match nozzle:
+            case 'N502':
+                d0=0.4     
+                d1=0.7
+            case 'N503':
+                d0=0.6     
+                d1=1.0
+            case 'N504':
+                d0=1.     
+                d1=1.5
+            case 'N505':
+                d0=1.7     
+                d1=3.5
+            case 'N506':
+                d0=3.2     
+                d1=5.0
+        self.DrawFig(CXY(d0/2.,d0/2.),dz.XY,dz.Angle,"","#6BADA6",'O')        
+        self.DrawFig(CXY(d1/2.,d1/2.),dz.XY,dz.Angle,"","#6AAB9F",'O')        
         # Печатаем дезигнатор   
-        self.DrawText(dz.XY,dz.Angle,dz.Des,"#FDFDFD")         
-        
+        self.DrawText(dz.XY,dz.Angle,dz.Des,"#FDFDFD")  
+               
     # Отрисовка репперного занака
     def RepDraw(self,dz_rep,rdz):
         # Рисуем внешний круг

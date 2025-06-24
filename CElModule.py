@@ -210,7 +210,7 @@ class CElModule():
     
     # Отчет по монтажу SMD компонент
     def RepSMDprm(self,nIsp,side,angle=0):
-        SCALE=20
+        SCALE=15
         sp=self.GetIsp(nIsp)
         #----------------------
         #for el in sp: print(el)
@@ -223,14 +223,17 @@ class CElModule():
         CMDraw=CModDraw(self.__ModName,c)
         #----------------------
         # Вывод элементов по дезигнаторам
-        for key in retSMT[1].keys():
-            #print(f'>>{key}')
-            for el in retSMT[1][key]:
+        for nozzle in retSMT[1].keys():
+            # Перебераем головки установщика 
+            #print(f'>>{nozzle}')
+            for el in retSMT[1][nozzle]:
+                # Для каждой головки итерируем список компоненнтов
                 #print('   ',el)
                 for dz in self.__PerEl[el.UID]:
-                    if dz.Layer==side :
+                    # Для каждого компонента итерируем список дезигнаторов
+                    if dz.Layer==side : # Отсекаем те, которые находятся не на выводимой стороне.
                         #print('                       ',dz)
-                        CMDraw.DzDraw(dz,CXY(el.mt.x,el.mt.y)/2.)
+                        CMDraw.DzDraw(dz,CXY(el.mt.x,el.mt.y)/2.,nozzle)
         #--------------
         # Поиск, вывод и сортировка реперных знаков
         spREP=sp.rep_Rep()
@@ -268,9 +271,9 @@ def main():
     #nfile='C:/Users/tyurine.TEAMR2/Desktop/Python/GItHubUtilMain/launch/B3n2-TPb_IBOM_r1.html'
     #nfile='B3n2-MeasUDiv_IBOM_r1.html'
 
-    #nmodule='B3n2-DC-DC_r1'#.html'
+    nmodule='B3n2-DC-DC_r1'#.html'
     #nmodule='B3n2-ManBot_r1'#.html'
-    nmodule='B3n2-MeasUDiv_r1'#.html'
+    #nmodule='B3n2-MeasUDiv_r1'#.html'
 
     #nfile='TestIBOM_TSU33702.html'
     #nfile='TestIBOM_TSU33701.html'
@@ -283,10 +286,10 @@ def main():
     #spec.RepDz()
 
 
-    spec.RepSMDprm(0,'F')
-    spec.RepSMDprm(0,'F',90)
-    spec.RepSMDprm(0,'F',180)
-    spec.RepSMDprm(0,'F',270)
+    #spec.RepSMDprm(0,'F')
+    #spec.RepSMDprm(0,'F',90)
+    #spec.RepSMDprm(0,'F',180)
+    #spec.RepSMDprm(0,'F',270)
     spec.RepSMDprm(0,'B')
     spec.RepSMDprm(0,'B',90)
     spec.RepSMDprm(0,'B',180)

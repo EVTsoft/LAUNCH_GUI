@@ -135,6 +135,11 @@ class tCXY():
         return self.__angle
     
     
+    @property
+    def side(self):
+        return self.__side
+    
+    
     def size(self,sc):
         x=self.__brd.x
         y=self.__brd.y
