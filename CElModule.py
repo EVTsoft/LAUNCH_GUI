@@ -210,7 +210,7 @@ class CElModule():
     
     # Отчет по монтажу SMD компонент
     def RepSMDprm(self,nIsp,side,angle=0):
-        SCALE=15
+        SCALE=10
         sp=self.GetIsp(nIsp)
         #----------------------
         #for el in sp: print(el)
@@ -244,7 +244,7 @@ class CElModule():
             for dz_rep in  lst_rep:
                 #print(dz_rep)
                 CMDraw.RepDraw(dz_rep,1.)
-            lst_rep.sort(key=lambda d : d.XY.lvector(side,CXY(0.,0.),self.__SizeBrd))
+            lst_rep.sort(key=lambda d : c.lvector(d.XY))
             #print('')
             #for dd in lst_rep: print (dd)
             CMDraw.RepFL(CXY(1.1,1.1),lst_rep[0],lst_rep[-1])  
@@ -286,10 +286,10 @@ def main():
     #spec.RepDz()
 
 
-    #spec.RepSMDprm(0,'F')
-    #spec.RepSMDprm(0,'F',90)
-    #spec.RepSMDprm(0,'F',180)
-    #spec.RepSMDprm(0,'F',270)
+    spec.RepSMDprm(0,'F')
+    spec.RepSMDprm(0,'F',90)
+    spec.RepSMDprm(0,'F',180)
+    spec.RepSMDprm(0,'F',270)
     spec.RepSMDprm(0,'B')
     spec.RepSMDprm(0,'B',90)
     spec.RepSMDprm(0,'B',180)

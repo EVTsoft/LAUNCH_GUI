@@ -9,7 +9,7 @@ class CModDraw():
         #
         self.__root = Tk()
         self.__root.title(self.__ModName)
-        self.__root.geometry(self.__c.size(1.2))
+        self.__root.geometry(self.__c.size(1.1))
         #
         self.__canvas = Canvas(bg="#53C351", width=c.width, height=c.height)
         self.__canvas.pack(anchor=CENTER, expand=1)
@@ -84,8 +84,10 @@ class CModDraw():
             case 'N506':
                 d0=3.2     
                 d1=5.0
-        self.DrawFig(CXY(d0/2.,d0/2.),dz.XY,dz.Angle,"","#6BADA6",'O')        
-        self.DrawFig(CXY(d1/2.,d1/2.),dz.XY,dz.Angle,"","#6AAB9F",'O')        
+        self.DrawFig(CXY(d0/2.,d0/2.),dz.XY,dz.Angle,"","#000000",'O')        
+        self.DrawFig(CXY(d0/2.+.1,d0/2.+.1),dz.XY,dz.Angle,"","#000000",'O')        
+        self.DrawFig(CXY(d1/2.,d1/2.),dz.XY,dz.Angle,"","#000000",'O')        
+        self.DrawFig(CXY(d1/2.-.1,d1/2.-.1),dz.XY,dz.Angle,"","#000000",'O')        
         # Печатаем дезигнатор   
         self.DrawText(dz.XY,dz.Angle,dz.Des,"#FDFDFD")  
                
