@@ -3,7 +3,7 @@ import sys
 import resources
 
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QBrush, QIcon, QPixmap
+from PyQt5.QtGui import QBrush, QIcon, QPixmap, QFont
 from PyQt5.QtWidgets import QApplication, QMainWindow, QFileDialog, QMdiSubWindow, QPlainTextEdit, \
     QTreeWidgetItem, QAction
 from modfab_ui import Ui_mainWindow
@@ -22,6 +22,22 @@ class Window(QMainWindow, Ui_mainWindow):
         self.connect_signals()
         self.zapusk = None
         self.treeWidget.setHeaderLabel('')
+        spec_icon = QIcon(QPixmap(':icons/spec.png'))
+        mod_icon = QIcon(QPixmap(':icons/mod.png'))
+        pack_type_icon = QIcon(QPixmap(':icons/pack_type.png'))
+        stanok_icon = QIcon(QPixmap(':icons/stanok.png'))
+        self.spec_action = QAction(spec_icon, 'Полная спецификация', self)
+        self.mod_action = QAction(mod_icon, 'Спецификация по модулям', self)
+        self.pack_type_action = QAction(pack_type_icon, 'Спецификация по типам упаковки', self)
+        self.stanok_action = QAction(stanok_icon, 'Спецификация по станкам', self)
+        self.toolBar.addAction(self.spec_action)
+        self.toolBar.addAction(self.mod_action)
+        self.toolBar.addAction(self.pack_type_action)
+        self.toolBar.addAction(self.stanok_action)
+        self.text = QPlainTextEdit()
+        self.text.setReadOnly(True)
+        self.monospace_font = QFont('Courier', 8)
+        self.text.setFont(self.monospace_font)
 
     def connect_signals(self):
         self.action.triggered.connect(self.open_file_selection)
@@ -29,6 +45,7 @@ class Window(QMainWindow, Ui_mainWindow):
 
 
     def open_file_selection(self):
+        print('ok')
         dialog = QFileDialog()
         file = dialog.getOpenFileName(
             None,
@@ -43,8 +60,11 @@ class Window(QMainWindow, Ui_mainWindow):
         self.mdiArea.addSubWindow(subwindow)
         subwindow.setGeometry(0, 0, 887, 671)
         subwindow.show()
-        self.zapusk = CLaunch(launch_file_name)
+        print('ok', launch_file_name.split('/')[-1])
+        self.zapusk = CLaunch(launch_file_name.split('/')[-1])
+        print('ok')
         self.launch_tree()
+        print('ok')
 
     def launch_tree(self):
         data = self.zapusk.mod_bom
@@ -97,20 +117,29 @@ class Window(QMainWindow, Ui_mainWindow):
 
     def test(self, item):
         if item.text(0)[-1:-5:-1] == 'paz.':
-            text = QPlainTextEdit()
-            text.setReadOnly(True)
-            self.mdiArea.activeSubWindow().setWidget(text)
-            # spec_icon = QIcon(QPixmap(':/spec.png'))
-            # spec_action = QAction(spec_icon, '')
-            # mod_icon = QIcon(QPixmap(':/mod.png'))
-            # mod_action = QAction(mod_icon, '')
-            # pack_type_icon = QIcon(QPixmap(':/pack_type.png'))
-            # pack_type_action = QAction(pack_type_icon, '')
-            # stanok_icon = QIcon(QPixmap(':/stanok.png'))
-            # stanok_action = QAction(stanok_icon, '')
-            # self.toolBar.addActions([spec_action, mod_action, pack_type_action, stanok_action])
-            text.clear()
-            text.insertPlainText(self.zapusk.rpt())
+            self.mdiArea.activeSubWindow().setWidget(self.text)
+            self.text.clear()
+            self.text.insertPlainText(self.zapusk.rpt())
+            self.spec_action.triggered.connect(self.print_rpt)
+            self.mod_action.triggered.connect(self.print_rpt_allMS)
+            self.pack_type_action.triggered.connect(self.print_rpt_SMD_pack)
+            self.stanok_action.triggered.connect(self.print_rpt_stanoks)
+
+    def print_rpt(self):
+        self.text.clear()
+        self.text.insertPlainText(self.zapusk.rpt())
+
+    def print_rpt_allMS(self):
+        self.text.clear()
+        self.text.insertPlainText(self.zapusk.rpt_allMS())
+
+    def print_rpt_SMD_pack(self):
+        self.text.clear()
+        self.text.insertPlainText(self.zapusk.rpt_SMD_pack())
+
+    def print_rpt_stanoks(self):
+        self.text.clear()
+        self.text.insertPlainText(self.zapusk.rpt_stanoks())
 
 
 

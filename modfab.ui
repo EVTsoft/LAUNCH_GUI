@@ -94,7 +94,7 @@
         <x>0</x>
         <y>0</y>
         <width>849</width>
-        <height>225</height>
+        <height>69</height>
        </rect>
       </property>
      </widget>
@@ -131,6 +131,7 @@
    <attribute name="toolBarBreak">
     <bool>true</bool>
    </attribute>
+   <addaction name="separator"/>
   </widget>
   <action name="action">
    <property name="text">

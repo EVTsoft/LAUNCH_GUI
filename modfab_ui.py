@@ -59,7 +59,7 @@ class Ui_mainWindow(object):
         self.scrollArea.setWidgetResizable(True)
         self.scrollArea.setObjectName("scrollArea")
         self.scrollAreaWidgetContents = QtWidgets.QWidget()
-        self.scrollAreaWidgetContents.setGeometry(QtCore.QRect(0, 0, 849, 225))
+        self.scrollAreaWidgetContents.setGeometry(QtCore.QRect(0, 0, 849, 69))
         self.scrollAreaWidgetContents.setObjectName("scrollAreaWidgetContents")
         self.scrollArea.setWidget(self.scrollAreaWidgetContents)
         mainWindow.setCentralWidget(self.centralwidget)
@@ -86,6 +86,7 @@ class Ui_mainWindow(object):
         self.menu.addAction(self.action_2)
         self.menu.addAction(self.action_3)
         self.menubar.addAction(self.menu.menuAction())
+        self.toolBar.addSeparator()
 
         self.retranslateUi(mainWindow)
         QtCore.QMetaObject.connectSlotsByName(mainWindow)
