@@ -7,22 +7,6 @@ class CXY():
       self.__y=y
 
 
-  def lvector(self,side,xy,size_xy,lny=True):
-    x=0.
-    if side=='F':
-        x=self.__x
-    else:
-        x=size_xy.x-self.__x 
-    y=0
-    if lny:
-        y=self.__y  
-    else:
-        y=size_xy.y-self.__y
-    x=x-xy.x    
-    y=y-xy.y    
-    return math.sqrt(x**2+y**2)
-
-
   def copy(self):
       return CXY(self.__x,self.__y)
 
@@ -135,6 +119,11 @@ class tCXY():
         return self.__angle
     
     
+    @property
+    def side(self):
+        return self.__side
+    
+    
     def size(self,sc):
         x=self.__brd.x
         y=self.__brd.y
@@ -147,24 +136,57 @@ class tCXY():
     def tr(self,xy):
         x=0
         y=0
-        match self.__angle:
-            case 0:
-                x=xy.x
-                y=self.__brd.y-xy.y
-            case 90:
-                x=self.__brd.y-xy.y
-                y=self.__brd.x-xy.x
-            case 180:
-                x=self.__brd.x-xy.x
-                y=xy.y
-            case 270:
-                x=xy.y
-                y=xy.x
-            case _:
-                print('ВНИМАНИЕ! Ошибка угла поворота платы ****************************************')        
+        if(self.__side=='F'):
+            match self.__angle:
+                case 0:
+                    x=xy.x
+                    y=self.__brd.y-xy.y
+                case 90:
+                    x=self.__brd.y-xy.y
+                    y=self.__brd.x-xy.x
+                case 180:
+                    x=self.__brd.x-xy.x
+                    y=xy.y
+                case 270:
+                    x=xy.y
+                    y=xy.x
+                case _:
+                    print('ВНИМАНИЕ! Ошибка угла поворота платы side F *********************************')  
+        else:
+             match self.__angle:
+                case 0:
+                    x=self.__brd.x-xy.x
+                    y=self.__brd.y-xy.y
+                case 90:
+                    x=xy.y
+                    y=self.__brd.x-xy.x
+                case 180:
+                    x=xy.x
+                    y=xy.y
+                case 270:
+                    x=self.__brd.y-xy.y
+                    y=xy.x
+                case _:
+                    print('ВНИМАНИЕ! Ошибка угла поворота платы side B *********************************')                 
         x=round(x*self.__scale)   
         y=round(y*self.__scale)   
         return CXY(x,y)           
+
+
+    def lvector(self,xy,lny=True):
+        #print (xy)
+        XY=self.tr(xy)
+        x=0
+        y=self.__brd.y
+        if (self.__angle==90) |(self.__angle==270):
+            y=self.__brd.x 
+        x=round(x*self.__scale)   
+        y=round(y*self.__scale)       
+        x=XY.x-x    
+        y=XY.y-y 
+        r=math.sqrt(x**2+y**2)   
+        #print (xy,'  ',XY,'  ',r,'  ',x,'  ',y)
+        return r
 
 
     def trvl(self,Txy,half,angle=0):
