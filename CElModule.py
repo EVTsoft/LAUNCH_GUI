@@ -210,7 +210,7 @@ class CElModule():
     
     # Отчет по монтажу SMD компонент
     def RepSMDprm(self,nIsp,side,angle=0):
-        SCALE=10
+        SCALE=20
         sp=self.GetIsp(nIsp)
         #----------------------
         #for el in sp: print(el)
