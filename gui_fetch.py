@@ -16,7 +16,6 @@ class Window(QMainWindow, Ui_mainWindow):
         self.setupUi(self)
         self.setGeometry(200, 100, 1500, 800)
         self.tableWidget.setGeometry(595, 0, 500, 585)
-        # self.treeWidget.setGeometry(0, 0, 320, 585)
         self.mdiArea.setGeometry(420, 0, 900, 585)
         self.setCentralWidget(self.splitter_2)
         self.connect_signals()
@@ -38,6 +37,8 @@ class Window(QMainWindow, Ui_mainWindow):
         self.text.setReadOnly(True)
         self.monospace_font = QFont('Courier', 8)
         self.text.setFont(self.monospace_font)
+        self.text.setGeometry(0, 0, 1500, 480)
+        self.text.setLineWrapMode(0)
 
     def connect_signals(self):
         self.action.triggered.connect(self.open_file_selection)
@@ -45,7 +46,6 @@ class Window(QMainWindow, Ui_mainWindow):
 
 
     def open_file_selection(self):
-        print('ok')
         dialog = QFileDialog()
         file = dialog.getOpenFileName(
             None,
@@ -59,12 +59,9 @@ class Window(QMainWindow, Ui_mainWindow):
         subwindow.setObjectName(launch_file_name.split('/')[-1])
         self.mdiArea.addSubWindow(subwindow)
         subwindow.setGeometry(0, 0, 887, 671)
-        subwindow.show()
-        print('ok', launch_file_name.split('/')[-1])
+        subwindow.showMaximized()
         self.zapusk = CLaunch(launch_file_name.split('/')[-1])
-        print('ok')
         self.launch_tree()
-        print('ok')
 
     def launch_tree(self):
         data = self.zapusk.mod_bom
@@ -72,6 +69,20 @@ class Window(QMainWindow, Ui_mainWindow):
         self.treeWidget.setHeaderLabels(['Запуски', 'Кол-во'])
         self.treeWidget.setColumnWidth(0, 190)
         self.treeWidget.setColumnWidth(1, 40)
+        self.treeWidget.setAlternatingRowColors(True)
+        stylesheet = '''
+        QTreeWidget { 
+                alternate-background-color: #edf6fa;
+                background: white
+            }
+        QHeaderView::section {
+                background-color: #c5e1eb
+            }
+        QHeaderView::section:last {
+                background-color: #8fbfcf
+            }    
+        '''
+        self.treeWidget.setStyleSheet(stylesheet)
         zap = QTreeWidgetItem()
         zap.setText(0, self.zapusk.launch_fn.split('/')[-1])
         lst_stanok = list(set([st['Stanok'] for st in data]))
@@ -117,6 +128,7 @@ class Window(QMainWindow, Ui_mainWindow):
 
     def test(self, item):
         if item.text(0)[-1:-5:-1] == 'paz.':
+            self.statusbar.showMessage('Режим работы с запуском')
             self.mdiArea.activeSubWindow().setWidget(self.text)
             self.text.clear()
             self.text.insertPlainText(self.zapusk.rpt())
