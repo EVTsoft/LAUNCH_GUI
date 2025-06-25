@@ -1,0 +1,9 @@
+<!DOCTYPE RCC>
+<RCC version="1.0">
+    <qresource prefix="icons">
+        <file alias="spec.png">spec.png</file>
+        <file alias="mod.png">mod.png</file>
+        <file alias="pack_type.png">pack_type.png</file>
+        <file alias="stanok.png">stanok.png</file>
+    </qresource>
+</RCC>
