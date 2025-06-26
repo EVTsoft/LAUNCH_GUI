@@ -100,7 +100,8 @@ class CLaunch:
         return sret
 
 def main():
-    cz=CLaunch('zapusk_B3n2_2000.zap') 
+    #cz=CLaunch('zapusk_B3n2_2000.zap') 
+    cz=CLaunch('zapusk_TS337_измK2.zap')
     #cz=CLaunch('zapusk_00.zap') 
     #cz=CLaunch('zapusk_01.zap') 
     #cz=CLaunch('zapusk_010.zap') 
@@ -111,14 +112,15 @@ def main():
     #print('\n')
 
 
-    #print(cz.rpt())
-    #print(cz.rpt_allMS())
-    #print(cz.rpt_SMD_pack())
-    #print(cz.rpt_stanoks())
-    pprint.pprint(cz.launch_spec)
-    pprint.pprint(cz.mod_bom)
-    pprint.pprint(cz.launch_dir)
-    pprint.pprint(cz.launch_fn)
+    print(cz.rpt())
+    print(cz.rpt_allMS())
+    print(cz.rpt_SMD_pack())
+    print(cz.rpt_stanoks())
+
+    #pprint.pprint(cz.launch_spec)
+    #pprint.pprint(cz.mod_bom)
+    #pprint.pprint(cz.launch_dir)
+    #pprint.pprint(cz.launch_fn)
     
     #print(cz.rpt_SMDRLC_pack8(1))
     #print(cz.rpt_SMDRLC_pack8(2))
