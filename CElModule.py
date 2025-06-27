@@ -206,24 +206,48 @@ class CElModule():
     
     # Отчет по монтажу SMD компонент
     def RepSMDprm(self,nIsp,side,angle=0):
-        SCALE=10
+        SCALE=20
         sp=self.GetIsp(nIsp)
         #----------------------
-        #for el in sp: print(el)
-        #----------------------
         retSMT=sp.rep_SMD_nozzle()
-        #print(retSMT[0])   
         #----------------------
         c=tCXY(SCALE,self.__SizeBrd,side,angle)
         # Объект графического отображения       
         CMDraw=CModDraw(self.__ModName,c)
         #----------------------
+         # Поиск, вывод и сортировка реперных знаков
+        all_list_rep=[]
+        spREP=sp.rep_Rep()
+        for rep in spREP:
+            lst_rep=[dz for dz in self.__PerEl[rep.UID] if (dz.Layer==side) | (rep.mt.fp[:5]=='REP-D')]
+            all_list_rep+=lst_rep
+            for dz_rep in  lst_rep:
+                 CMDraw.RepDraw(dz_rep,1.)
+        all_list_rep.sort(key=lambda d : c.lvector(d.XY))
+        m1=all_list_rep[0]
+        m2=all_list_rep[-1]
+        CMDraw.RepFL(CXY(1.1,1.1),m1,m2)  
+        First_str=f'Designator,Footprint,Center-X(mm),Center-Y(mm),Layer,Rotation,Comment'
+        nxy=m1.XY
+        print(nxy,m1.XY)
+        Rep1_xy=m1.XY.newnorm(nxy)
+        Rep2_xy=m2.XY.newnorm(nxy)
+        #Rep1_xy.norm(nxy)
+        #Rep2_xy.norm(nxy)
+        Rep1_str=f'm1,MARK_PIX,{Rep1_xy.x},{Rep1_xy.y},T,{c.tr_angle(m1.Angle)},{m1.Des}'
+        Rep2_str=f'm2,MARK_PIX,{Rep2_xy.x},{Rep2_xy.y},T,{c.tr_angle(m2.Angle)},{m2.Des}'
+
+
+        #----------------------  
         # Вывод элементов по дезигнаторам
         for nozzle in retSMT[1].keys():
             # Перебераем головки установщика 
-            print(f'>>{nozzle} - ',end="") 
+            print('\n')
+            print(First_str)
+            print(Rep1_str)
+            print(Rep2_str)
             i=0
-            for i,el in enumerate(retSMT[1][nozzle]):
+            for el in retSMT[1][nozzle]:
                 # Для каждой головки итерируем список компоненнтов
                 #print('   ',el)
                 for dz in self.__PerEl[el.UID]:
@@ -231,23 +255,11 @@ class CElModule():
                     if dz.Layer==side : # Отсекаем те, которые находятся не на выводимой стороне.
                         #print('                       ',dz)
                         CMDraw.DzDraw(dz,CXY(el.mt.x,el.mt.y)/2.,nozzle)
-            #else:
-                #print (f'Всего к установке типов компонент: {i+1}')            
+            #if(i!=0)
+            #if             
         #--------------
-        # Поиск, вывод и сортировка реперных знаков
-        spREP=sp.rep_Rep()
-        #print (len(spREP))
-        for rep in spREP:
-            #print(rep)#,'   ',rep.mt.fp[:5])
-            lst_rep=[dz for dz in self.__PerEl[rep.UID] if (dz.Layer==side) | (rep.mt.fp[:5]=='REP-D')]
-            for dz_rep in  lst_rep:
-                #print(dz_rep)
-                CMDraw.RepDraw(dz_rep,1.)
-            lst_rep.sort(key=lambda d : c.lvector(d.XY))
-            #print('')
-            #for dd in lst_rep: print (dd)
-            CMDraw.RepFL(CXY(1.1,1.1),lst_rep[0],lst_rep[-1])  
-            #print(self.__SizeBrd)   
+
+       
         #--------------
         CMDraw.RootLoop()
         #
@@ -270,9 +282,9 @@ def main():
     #nfile='C:/Users/tyurine.TEAMR2/Desktop/Python/GItHubUtilMain/launch/B3n2-TPb_IBOM_r1.html'
     #nfile='B3n2-MeasUDiv_IBOM_r1.html'
 
-    nmodule='B3n2-DC-DC_r1'#.html'
+    #nmodule='B3n2-DC-DC_r1'#.html'
     #nmodule='B3n2-ManBot_r1'#.html'
-    #nmodule='B3n2-MeasUDiv_r1'#.html'
+    nmodule='B3n2-MeasUDiv_r1'#.html'
 
     #nfile='TestIBOM_TSU33702.html'
     #nfile='TestIBOM_TSU33701.html'
@@ -285,14 +297,14 @@ def main():
     #spec.RepDz()
 
 
-    #spec.RepSMDprm(0,'F')
-    #spec.RepSMDprm(0,'F',90)
-    #spec.RepSMDprm(0,'F',180)
-    #spec.RepSMDprm(0,'F',270)
+    spec.RepSMDprm(0,'F')
+    spec.RepSMDprm(0,'F',90)
+    spec.RepSMDprm(0,'F',180)
+    spec.RepSMDprm(0,'F',270)
     spec.RepSMDprm(0,'B')
-    #spec.RepSMDprm(0,'B',90)
-    #spec.RepSMDprm(0,'B',180)
-    #spec.RepSMDprm(0,'B',270)
+    spec.RepSMDprm(0,'B',90)
+    spec.RepSMDprm(0,'B',180)
+    spec.RepSMDprm(0,'B',270)
     
     
     #spec.RepSMDprm(0,'B')

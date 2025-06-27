@@ -12,6 +12,7 @@ class CXY():
 
 
   def norm(self,cxy):
+      
       self.__x=round(self.__x-cxy.x,6)
       self.__y=round(self.__y-cxy.y,6)
       return self
@@ -79,6 +80,7 @@ class CXY():
   @property
   def x(self):
     return self.__x
+  
   @property
   def y(self):
     return self.__y
@@ -131,9 +133,15 @@ class tCXY():
             x=self.__brd.y
             y=self.__brd.x
         return f'{round(sc*self.__scale*x)}x{round(sc*self.__scale*y)}'    
-    
 
-    def tr(self,xy):
+
+    def tr_angle(self,ang):
+        ret_angle=(ang+self.__angle)%360
+        if self.__side=='B':
+            ret_angle=(360-((360+self.__angle-ang)%360))%360
+        return ret_angle
+       
+    def tr_nscale(self,xy):
         x=0
         y=0
         if(self.__side=='F'):
@@ -168,10 +176,15 @@ class tCXY():
                     y=xy.x
                 case _:
                     print('ВНИМАНИЕ! Ошибка угла поворота платы side B *********************************')                 
-        x=round(x*self.__scale)   
-        y=round(y*self.__scale)   
         return CXY(x,y)           
 
+
+    def tr(self,ixy):
+        xy=self.tr_nscale(ixy)                 
+        x=round(xy.x*self.__scale)   
+        y=round(xy.y*self.__scale)   
+        return CXY(x,y)           
+    
 
     def lvector(self,xy,lny=True):
         #print (xy)

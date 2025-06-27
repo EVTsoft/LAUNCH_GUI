@@ -28,9 +28,7 @@ class CModDraw():
             
     # Печать текста на плате с переводом координат
     def DrawText(self,xy,ang,txt,txt_fill):
-        angle_turn=(ang+self.__c.angle)%360
-        if self.__c.side=='B':
-            angle_turn=(360-((360+self.__c.angle-ang)%360))%360
+        angle_turn=self.__c.tr_angle(ang)
         dt=self.__c.tr(xy)
         textID = self.__canvas.create_text(dt.x,dt.y, angle=angle_turn, fill=txt_fill)
         self.__canvas.itemconfig(textID, text = txt)
