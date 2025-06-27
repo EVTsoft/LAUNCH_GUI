@@ -158,8 +158,6 @@ class CElModule():
                                             if pd['pin1']==1 : xy1p=pdxy.copy()
                                             else : print(' >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Ошибка определения 1-го pin-а !!!')      
                                     mdes.append(CDesignator(elbom[3][i][0],bom['footprints'][ind]['layer'],bom['footprints'][ind]['bbox']['angle'],(pminxy+pmaxxy)/2,xy1p))
-                            #for d in mdes :
-                             #   print(d)
                             sisp=str_prop(elbom[4],fvok.vt) 
                             match sisp:
                                 case 'all':     # Устанавливается всегда
@@ -193,9 +191,7 @@ class CElModule():
         self.__l_isp.sort()      # Сортированное множество целых - присутствующие в модуле номера исполнений
         with open(self.__NFPICK, "wb") as fpick:
             pickle.dump(self,fpick)
-            
-
-        
+             
 
     # Отчет о дезигнаторах в модуле
     def RepDz(self):
@@ -210,7 +206,7 @@ class CElModule():
     
     # Отчет по монтажу SMD компонент
     def RepSMDprm(self,nIsp,side,angle=0):
-        SCALE=10
+        SCALE=20
         sp=self.GetIsp(nIsp)
         #----------------------
         #for el in sp: print(el)
@@ -225,8 +221,9 @@ class CElModule():
         # Вывод элементов по дезигнаторам
         for nozzle in retSMT[1].keys():
             # Перебераем головки установщика 
-            #print(f'>>{nozzle}')
-            for el in retSMT[1][nozzle]:
+            print(f'>>{nozzle} - ',end="") 
+            i=0
+            for i,el in enumerate(retSMT[1][nozzle]):
                 # Для каждой головки итерируем список компоненнтов
                 #print('   ',el)
                 for dz in self.__PerEl[el.UID]:
@@ -234,6 +231,8 @@ class CElModule():
                     if dz.Layer==side : # Отсекаем те, которые находятся не на выводимой стороне.
                         #print('                       ',dz)
                         CMDraw.DzDraw(dz,CXY(el.mt.x,el.mt.y)/2.,nozzle)
+            #else:
+                #print (f'Всего к установке типов компонент: {i+1}')            
         #--------------
         # Поиск, вывод и сортировка реперных знаков
         spREP=sp.rep_Rep()
@@ -286,14 +285,14 @@ def main():
     #spec.RepDz()
 
 
-    spec.RepSMDprm(0,'F')
-    spec.RepSMDprm(0,'F',90)
-    spec.RepSMDprm(0,'F',180)
-    spec.RepSMDprm(0,'F',270)
+    #spec.RepSMDprm(0,'F')
+    #spec.RepSMDprm(0,'F',90)
+    #spec.RepSMDprm(0,'F',180)
+    #spec.RepSMDprm(0,'F',270)
     spec.RepSMDprm(0,'B')
-    spec.RepSMDprm(0,'B',90)
-    spec.RepSMDprm(0,'B',180)
-    spec.RepSMDprm(0,'B',270)
+    #spec.RepSMDprm(0,'B',90)
+    #spec.RepSMDprm(0,'B',180)
+    #spec.RepSMDprm(0,'B',270)
     
     
     #spec.RepSMDprm(0,'B')
