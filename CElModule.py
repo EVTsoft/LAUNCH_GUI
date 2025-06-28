@@ -298,13 +298,13 @@ def main():
 
 
     spec.RepSMDprm(0,'F')
-    spec.RepSMDprm(0,'F',90)
-    spec.RepSMDprm(0,'F',180)
-    spec.RepSMDprm(0,'F',270)
-    spec.RepSMDprm(0,'B')
-    spec.RepSMDprm(0,'B',90)
-    spec.RepSMDprm(0,'B',180)
-    spec.RepSMDprm(0,'B',270)
+    #spec.RepSMDprm(0,'F',90)
+    #spec.RepSMDprm(0,'F',180)
+    #spec.RepSMDprm(0,'F',270)
+    #spec.RepSMDprm(0,'B')
+    #spec.RepSMDprm(0,'B',90)
+    #spec.RepSMDprm(0,'B',180)
+    #spec.RepSMDprm(0,'B',270)
     
     
     #spec.RepSMDprm(0,'B')
