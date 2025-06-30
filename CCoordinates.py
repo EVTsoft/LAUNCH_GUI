@@ -12,7 +12,6 @@ class CXY():
 
 
   def norm(self,cxy):
-      
       self.__x=round(self.__x-cxy.x,6)
       self.__y=round(self.__y-cxy.y,6)
       return self
@@ -21,6 +20,11 @@ class CXY():
   def newnorm(self,cxy):
       return self-cxy      
 
+
+  def norm_round(self,cxy,rnd=7):
+      xy=self.newnorm(cxy)
+      return CXY(round(xy.x,rnd), round(xy.y,rnd))
+    
 
   def min(self,cxy):
       if self.__x > cxy.x : self.__x=cxy.x
@@ -80,10 +84,16 @@ class CXY():
   @property
   def x(self):
     return self.__x
+  #@x.setter
+  def set_x(self, ix):
+    self.__x=ix  
   
   @property
   def y(self):
     return self.__y
+  #@y.setter
+  def set_y(self, iy):
+    self.__y=iy  
   
 
 
@@ -98,6 +108,11 @@ class tCXY():
     @property
     def brd(self):
         return self.__brd
+    
+
+    @property
+    def scale(self):
+        return self.__scale
     
 
     @property
@@ -183,6 +198,12 @@ class tCXY():
         xy=self.tr_nscale(ixy)                 
         x=round(xy.x*self.__scale)   
         y=round(xy.y*self.__scale)   
+        return CXY(x,y)           
+    
+    def tr_plt_nscale(self,ixy,rnd=7):
+        xy=self.tr_nscale(ixy)
+        x=round(xy.x,rnd)   
+        y=round(self.__brd.y-xy.y,rnd)   
         return CXY(x,y)           
     
 

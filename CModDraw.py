@@ -1,6 +1,10 @@
 from CCoordinates import CXY,tCXY
 from CDesignator import CDesignator
 from tkinter import *
+import tkinter as tk
+import tkinter.ttk as ttk
+from tktooltip import ToolTip
+
 # Класс отрисовки электронного модуля
 class CModDraw():
     def __init__(self,ModName,c,):
@@ -14,7 +18,31 @@ class CModDraw():
         self.__canvas = Canvas(bg="#53C351", width=c.width, height=c.height)
         self.__canvas.pack(anchor=CENTER, expand=1)
         #
+        self.__root.bind('<Motion>', self.move)
+        self.__xy_null=CXY()
+        self.__mxy=CXY()
+        ToolTip(self.__canvas, msg=self.getmsg)
+
+
+
+    def set0plt(self,XY_null):
+        self.__xy_null=self.__c.tr(XY_null) 
         
+
+    def getmsg(self):
+        return str(self.__mxy)
+            
+
+    def move(self,event):
+            xy=CXY(event.x,event.y).norm(self.__xy_null)
+            self.__mxy.set_x(xy.x/self.__c.scale)
+            self.__mxy.set_y(-xy.y/self.__c.scale)
+
+
+    def RootLoop(self):
+        self.__root.mainloop()
+
+
     # Отрисовка фигуры с переводом координат
     def DrawFig(self,rzm,xy,Angle,el_fill,el_outline,fig='R'):
          # Рисуем компонент
@@ -106,5 +134,4 @@ class CModDraw():
         self.DrawFig(rzfr,rep1.XY,rep1.Angle,"","#291FE7",'O')
          
 
-    def RootLoop(self):
-        self.__root.mainloop()
+    

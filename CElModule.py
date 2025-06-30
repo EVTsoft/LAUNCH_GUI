@@ -206,7 +206,7 @@ class CElModule():
     
     # Отчет по монтажу SMD компонент
     def RepSMDprm(self,nIsp,side,angle=0):
-        SCALE=20
+        SCALE=10
         sp=self.GetIsp(nIsp)
         #----------------------
         retSMT=sp.rep_SMD_nozzle()
@@ -225,17 +225,15 @@ class CElModule():
                  CMDraw.RepDraw(dz_rep,1.)
         all_list_rep.sort(key=lambda d : c.lvector(d.XY))
         m1=all_list_rep[0]
+        CMDraw.set0plt(m1.XY)
         m2=all_list_rep[-1]
         CMDraw.RepFL(CXY(1.1,1.1),m1,m2)  
         First_str=f'Designator,Footprint,Center-X(mm),Center-Y(mm),Layer,Rotation,Comment'
-        nxy=m1.XY
-        print(nxy,m1.XY)
-        Rep1_xy=m1.XY.newnorm(nxy)
-        Rep2_xy=m2.XY.newnorm(nxy)
-        #Rep1_xy.norm(nxy)
-        #Rep2_xy.norm(nxy)
-        Rep1_str=f'm1,MARK_PIX,{Rep1_xy.x},{Rep1_xy.y},T,{c.tr_angle(m1.Angle)},{m1.Des}'
-        Rep2_str=f'm2,MARK_PIX,{Rep2_xy.x},{Rep2_xy.y},T,{c.tr_angle(m2.Angle)},{m2.Des}'
+        nxy=c.tr_plt_nscale(m1.XY)
+        Rep1_xy=c.tr_plt_nscale(m1.XY).norm_round(nxy)
+        Rep2_xy=c.tr_plt_nscale(m2.XY).norm_round(nxy)
+        Rep1_str=f'm1,MARK_PIX,{Rep1_xy.x},{Rep1_xy.y},T,{c.tr_angle(m1.Angle):g},{m1.Des}'
+        Rep2_str=f'm2,MARK_PIX,{Rep2_xy.x},{Rep2_xy.y},T,{c.tr_angle(m2.Angle):g},{m2.Des}'
 
 
         #----------------------  
@@ -282,9 +280,9 @@ def main():
     #nfile='C:/Users/tyurine.TEAMR2/Desktop/Python/GItHubUtilMain/launch/B3n2-TPb_IBOM_r1.html'
     #nfile='B3n2-MeasUDiv_IBOM_r1.html'
 
-    #nmodule='B3n2-DC-DC_r1'#.html'
+    nmodule='B3n2-DC-DC_r1'#.html'
     #nmodule='B3n2-ManBot_r1'#.html'
-    nmodule='B3n2-MeasUDiv_r1'#.html'
+    #nmodule='B3n2-MeasUDiv_r1'#.html'
 
     #nfile='TestIBOM_TSU33702.html'
     #nfile='TestIBOM_TSU33701.html'
@@ -297,14 +295,14 @@ def main():
     #spec.RepDz()
 
 
-    spec.RepSMDprm(0,'F')
+    #spec.RepSMDprm(0,'F')
     #spec.RepSMDprm(0,'F',90)
     #spec.RepSMDprm(0,'F',180)
     #spec.RepSMDprm(0,'F',270)
     #spec.RepSMDprm(0,'B')
     #spec.RepSMDprm(0,'B',90)
     #spec.RepSMDprm(0,'B',180)
-    #spec.RepSMDprm(0,'B',270)
+    spec.RepSMDprm(0,'B',270)
     
     
     #spec.RepSMDprm(0,'B')
