@@ -206,7 +206,7 @@ class CElModule():
     
     # Отчет по монтажу SMD компонент
     def RepSMDprm(self,nIsp,side,angle=0):
-        SCALE=10
+        SCALE=20
         sp=self.GetIsp(nIsp)
         #----------------------
         retSMT=sp.rep_SMD_nozzle()
@@ -244,17 +244,18 @@ class CElModule():
             print(First_str)
             print(Rep1_str)
             print(Rep2_str)
-            i=0
             for el in retSMT[1][nozzle]:
                 # Для каждой головки итерируем список компоненнтов
                 #print('   ',el)
+                el_str=el.mt.fp.strip().replace(' ','_')
+                el_ft=el.prm_type()
                 for dz in self.__PerEl[el.UID]:
                     # Для каждого компонента итерируем список дезигнаторов
                     if dz.Layer==side : # Отсекаем те, которые находятся не на выводимой стороне.
                         #print('                       ',dz)
-                        CMDraw.DzDraw(dz,CXY(el.mt.x,el.mt.y)/2.,nozzle)
-            #if(i!=0)
-            #if             
+                        delXY=c.tr_plt_nscale(dz.XY).norm_round(nxy)
+                        print(f'{dz.Des},{el_str},{delXY.x},{delXY.y},T,{c.tr_angle(dz.Angle):g},{el_ft}')
+                        CMDraw.DzDraw(dz,CXY(el.mt.x,el.mt.y)/2.,nozzle)             
         #--------------
 
        
@@ -299,10 +300,10 @@ def main():
     #spec.RepSMDprm(0,'F',90)
     #spec.RepSMDprm(0,'F',180)
     #spec.RepSMDprm(0,'F',270)
-    #spec.RepSMDprm(0,'B')
+    spec.RepSMDprm(0,'B')
     #spec.RepSMDprm(0,'B',90)
     #spec.RepSMDprm(0,'B',180)
-    spec.RepSMDprm(0,'B',270)
+    #spec.RepSMDprm(0,'B',270)
     
     
     #spec.RepSMDprm(0,'B')

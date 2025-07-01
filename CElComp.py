@@ -84,6 +84,12 @@ class CElComponent:
         return self.__name.ljust(LNAME) +str(self.__fun_type).ljust(LFUNTYPE) +str(self.__mnt_type)
     def __str__(self):
         return self.__strel()
+    def prm_type(self):
+        if isinstance(self.__fun_type,EC) | isinstance(self.__fun_type,L):
+            return self.__name
+        else:
+            return self.__fun_type.fprm_type()
+
     # Конструктор==========================================================================================================
     def __init__(self,proplist,vok,invalue='',inname=''):
          # Определяем откуда будем брать value
