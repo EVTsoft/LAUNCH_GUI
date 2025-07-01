@@ -189,6 +189,9 @@ class CElModule():
         if len(self.__var_vk)==0 : self.__var_vk[0]=CSpecification()
         self.__l_isp=[k for k in self.__var_vk.keys()]
         self.__l_isp.sort()      # Сортированное множество целых - присутствующие в модуле номера исполнений
+        #if os.path.exists(self.__NFPICK):
+            #os.remove(self.__NFPICK)
+            #print(f"Удален pick файл -{self.__NFPICK}")
         with open(self.__NFPICK, "wb") as fpick:
             pickle.dump(self,fpick)
              
@@ -237,13 +240,11 @@ class CElModule():
 
 
         #----------------------  
+        Noz_El_vk={}
         # Вывод элементов по дезигнаторам
         for nozzle in retSMT[1].keys():
             # Перебераем головки установщика 
-            print('\n')
-            print(First_str)
-            print(Rep1_str)
-            print(Rep2_str)
+            Noz_El_vk[nozzle]=[str(First_str),str(Rep1_str),str(Rep2_str)]
             for el in retSMT[1][nozzle]:
                 # Для каждой головки итерируем список компоненнтов
                 #print('   ',el)
@@ -254,11 +255,14 @@ class CElModule():
                     if dz.Layer==side : # Отсекаем те, которые находятся не на выводимой стороне.
                         #print('                       ',dz)
                         delXY=c.tr_plt_nscale(dz.XY).norm_round(nxy)
-                        print(f'{dz.Des},{el_str},{delXY.x},{delXY.y},T,{c.tr_angle(dz.Angle):g},{el_ft}')
+                        Noz_El_vk[nozzle].append(str(f'{dz.Des},{el_str},{delXY.x},{delXY.y},T,{c.tr_angle(dz.Angle):g},{el_ft}'))
                         CMDraw.DzDraw(dz,CXY(el.mt.x,el.mt.y)/2.,nozzle)             
         #--------------
-
-       
+        # Генерация программы для установщика SMD
+        for nz in Noz_El_vk.keys():
+            print('\n>>Головка:',nz)
+            for str_prm in Noz_El_vk[nz]:
+                print(str_prm)
         #--------------
         CMDraw.RootLoop()
         #
@@ -274,28 +278,14 @@ class CElModule():
 def main():
     # Получение списка файлов для обработки 
     LAUNCHDIR = 'launch'
-    #LAUDIR = "./"+LAUNCHDIR+"/"
-    #nfile ='B3n2-MMI_IBOM_r1.html'
-    #nfile='B3n2-Cross_IBOM_r1.html'
-    #nfile='B3n2-TU_IBOM_r1.html'
-    #nfile='C:/Users/tyurine.TEAMR2/Desktop/Python/GItHubUtilMain/launch/B3n2-TPb_IBOM_r1.html'
-    #nfile='B3n2-MeasUDiv_IBOM_r1.html'
 
     nmodule='B3n2-DC-DC_r1'#.html'
     #nmodule='B3n2-ManBot_r1'#.html'
     #nmodule='B3n2-MeasUDiv_r1'#.html'
 
-    #nfile='TestIBOM_TSU33702.html'
-    #nfile='TestIBOM_TSU33701.html'
-    #nfile='B3n2-IntMain_IBOM_r1.html'
-    #nfile ='C:/Users/tyurine.TEAMR2/Desktop/Python/GItHubUtilMain/launch2/TestIBOM_TSU33701.html'
-    #nfile ='C:/Users/tyurine.TEAMR2/Desktop/Python/GItHubUtilMain/launch2/TestIBOM_TSU33702.html'
-    #nfile='C:/Users/tyurine.TEAMR2/Desktop/Python/GItHubUtilMain/launch/AC-DC-LS10_IBOM_r1.html'
-    #spec=CElModule.Pick(nmodule,LAUNCHDIR)
-    spec=CElModule(nmodule,LAUNCHDIR)
-    #spec.RepDz()
-
-
+    spec=CElModule.Pick(nmodule,LAUNCHDIR)
+    #spec=CElModule(nmodule,LAUNCHDIR)
+   
     #spec.RepSMDprm(0,'F')
     #spec.RepSMDprm(0,'F',90)
     #spec.RepSMDprm(0,'F',180)
