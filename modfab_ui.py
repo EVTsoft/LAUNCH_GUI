@@ -75,7 +75,6 @@ class Ui_mainWindow(object):
         self.toolBar = QtWidgets.QToolBar(mainWindow)
         self.toolBar.setObjectName("toolBar")
         mainWindow.addToolBar(QtCore.Qt.TopToolBarArea, self.toolBar)
-        mainWindow.insertToolBarBreak(self.toolBar)
         self.action = QtWidgets.QAction(mainWindow)
         self.action.setObjectName("action")
         self.action_2 = QtWidgets.QAction(mainWindow)
@@ -86,7 +85,6 @@ class Ui_mainWindow(object):
         self.menu.addAction(self.action_2)
         self.menu.addAction(self.action_3)
         self.menubar.addAction(self.menu.menuAction())
-        self.toolBar.addSeparator()
 
         self.retranslateUi(mainWindow)
         QtCore.QMetaObject.connectSlotsByName(mainWindow)
