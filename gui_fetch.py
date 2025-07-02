@@ -12,9 +12,10 @@ from PyQt5.QtCore import Qt, QObject, QSettings, QLocale, QTranslator
 from PyQt5.QtGui import QBrush, QIcon, QPixmap, QFont, QColor, QTextCursor
 from PyQt5.QtWidgets import QApplication, QMainWindow, QFileDialog, QMdiSubWindow, QPlainTextEdit, \
     QTreeWidgetItem, QAction, QTextEdit, QMdiArea, QMenu, QDialog, QLabel, QFontDialog, QHBoxLayout, QVBoxLayout, \
-    QPushButton, QWidget, QToolButton
+    QPushButton, QWidget, QToolButton, QTreeWidget
 from modfab_ui import Ui_mainWindow
 from CLaunch import CLaunch
+from CElModule import CElModule
 
 I18N_QT_PATH = '/usr/share/qt/translations/'
 
@@ -65,20 +66,32 @@ class ActionButton(QToolButton):
         self.setIcon(icon)
         self.setText(text)
 
+
+class MyTreeWidget(QTreeWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setDragEnabled(True)
+        self.setAcceptDrops(True)
+        self.setDragDropMode(QTreeWidget.InternalMove)
+
+
 class Window(QMainWindow, Ui_mainWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.settings = QSettings('Team-R', 'MODFAB')
         self.setupUi(self)
         self.setGeometry(200, 100, 1500, 800)
-        self.tableWidget.setGeometry(595, 0, 500, 585)
-        self.mdiArea.setGeometry(420, 0, 900, 585)
+        self.tableWidget.setGeometry(595, 0, 400, 585)
+        self.mdiArea.setGeometry(420, 0, 1200, 585)
         self.setCentralWidget(self.splitter_2)
         self.zapusk = None
         self.state = None
         self.report_state = None
         self.launch_file_name = ''
-        self.treeWidget.setHeaderLabel('')
+        self.my_treeWidget = MyTreeWidget()
+        self.my_treeWidget.setHeaderLabel('')
+        self.my_treeWidget.setGeometry(0, 0, 310, 585)
+        self.splitter.insertWidget(0, self.my_treeWidget)
         spec_icon = QIcon(QPixmap(':icons/spec.png'))
         mod_icon = QIcon(QPixmap(':icons/mod.png'))
         pack_type_icon = QIcon(QPixmap(':icons/pack_type.png'))
@@ -87,14 +100,16 @@ class Window(QMainWindow, Ui_mainWindow):
         font_icon = QIcon(QPixmap(':icons/font.png'))
         save_icon = QIcon(QPixmap(':icons/save.png'))
         close_icon = QIcon(QPixmap(':icons/close.png'))
+        move_icon = QIcon(QPixmap(':icons/move.png'))
         self.spec_action = QAction(spec_icon, 'Полная', self)
-        self.mod_action = QAction(mod_icon, 'По модулям', self)
-        self.pack_type_action = QAction(pack_type_icon, 'По типам упаковки', self)
-        self.stanok_action = QAction(stanok_icon, 'По станкам', self)
-        self.add_stanok_action = QAction(plus_icon, 'Добавить станок', self)
-        self.change_font_action = QAction(font_icon, 'Изменить шрифт', self)
+        self.mod_action = QAction(mod_icon, 'Модули', self)
+        self.pack_type_action = QAction(pack_type_icon, 'Упаковка', self)
+        self.stanok_action = QAction(stanok_icon, 'Станки', self)
+        self.add_stanok_action = QAction(plus_icon, 'Добавить', self)
+        self.change_font_action = QAction(font_icon, 'Шрифт', self)
         self.save_zapusk_action = QAction(save_icon, 'Сохранить', self)
-        self.close_zapusk_action = QAction(close_icon, 'Закрыть запуск', self)
+        self.close_zapusk_action = QAction(close_icon, 'Удалить', self)
+        self.move_mod_action = QAction(move_icon, 'Переместить', self)
         self.spec_label = QLabel()
         self.spec_label.setText('Спецификации')
         self.spec_label.setAlignment(Qt.AlignHCenter)
@@ -113,12 +128,13 @@ class Window(QMainWindow, Ui_mainWindow):
         self.h_layout.addWidget(self.pack_type_button)
         self.h_layout.addWidget(self.stanok_button)
         self.v_layout = QVBoxLayout(self.container)
-        self.v_layout.addWidget(self.spec_label)
         self.v_layout.addLayout(self.h_layout)
+        self.v_layout.addWidget(self.spec_label)
         self.toolBar.addAction(self.save_zapusk_action)
         self.toolBar.addAction(self.add_stanok_action)
         self.toolBar.addAction(self.change_font_action)
         self.toolBar.addAction(self.close_zapusk_action)
+        self.toolBar.addAction(self.move_mod_action)
         self.toolBar.addSeparator()
         self.toolBar.addSeparator()
         self.toolBar.addWidget(self.container)
@@ -127,10 +143,7 @@ class Window(QMainWindow, Ui_mainWindow):
         # self.toolBar.addAction(self.pack_type_action)
         # self.toolBar.addAction(self.stanok_action)
         # self.toolBar.insertSeparator(self.spec_action)
-        self.add_stanok_action.setVisible(False)
-        self.change_font_action.setVisible(False)
-        self.save_zapusk_action.setVisible(False)
-        self.close_zapusk_action.setVisible(False)
+        self.move_mod_action.setVisible(False)
         self.spec_label.setVisible(False)
         self.spec_button.setVisible(False)
         self.mod_button.setVisible(False)
@@ -155,7 +168,7 @@ class Window(QMainWindow, Ui_mainWindow):
 
     def connect_signals(self):
         self.action.triggered.connect(self.open_file_selection)
-        self.treeWidget.itemClicked.connect(self.test)
+        self.my_treeWidget.itemPressed.connect(self.handle_tree_items)
         self.spec_action.triggered.connect(self.print_rpt)
         self.mod_action.triggered.connect(self.print_rpt_allMS)
         self.pack_type_action.triggered.connect(self.print_rpt_SMD_pack)
@@ -191,10 +204,7 @@ class Window(QMainWindow, Ui_mainWindow):
         if self.state:
             self.statusbar.showMessage(self.state)
             if self.state == 'Режим работы с запуском':
-                self.add_stanok_action.setVisible(True)
-                self.change_font_action.setVisible(True)
-                self.save_zapusk_action.setVisible(True)
-                self.close_zapusk_action.setVisible(True)
+                self.move_mod_action.setVisible(False)
                 self.spec_label.setVisible(True)
                 self.spec_button.setVisible(True)
                 self.mod_button.setVisible(True)
@@ -245,11 +255,11 @@ class Window(QMainWindow, Ui_mainWindow):
 
     def launch_tree(self):
         data = self.zapusk.mod_bom
-        self.treeWidget.setColumnCount(2)
-        self.treeWidget.setHeaderLabels(['Запуски', 'Кол-во'])
-        self.treeWidget.setColumnWidth(0, 190)
-        self.treeWidget.setColumnWidth(1, 40)
-        self.treeWidget.setAlternatingRowColors(True)
+        self.my_treeWidget.setColumnCount(2)
+        self.my_treeWidget.setHeaderLabels(['Запуски', 'Кол-во'])
+        self.my_treeWidget.setColumnWidth(0, 190)
+        self.my_treeWidget.setColumnWidth(1, 40)
+        self.my_treeWidget.setAlternatingRowColors(True)
         stylesheet = '''
         QTreeWidget { 
                 alternate-background-color: #edf6fa;
@@ -264,7 +274,7 @@ class Window(QMainWindow, Ui_mainWindow):
         QColumnView {
                 background: #b7bbbd     
         '''
-        self.treeWidget.setStyleSheet(stylesheet)
+        self.my_treeWidget.setStyleSheet(stylesheet)
         zap = QTreeWidgetItem()
         zap.setText(0, self.zapusk.launch_fn.split('/')[-1])
         zap.setBackground(1, QBrush(QColor('#d6d6d6')))
@@ -302,7 +312,7 @@ class Window(QMainWindow, Ui_mainWindow):
                 mod_child.setBackground(1, QBrush(QColor('#d6d6d6')))
                 st_child.addChild(mod_child)
             zap.addChild(st_child)
-        self.treeWidget.addTopLevelItem(zap)
+        self.my_treeWidget.addTopLevelItem(zap)
         zap.setExpanded(True)
         c = zap.childCount()
         for st in range(c):
@@ -312,15 +322,12 @@ class Window(QMainWindow, Ui_mainWindow):
                 for var in range(zap.child(st).child(mod).childCount()):
                     zap.child(st).child(mod).child(var).setExpanded(True)
 
-    def test(self, item):
+    def handle_tree_items(self, item):
         if item.text(0)[-1:-5:-1] == 'paz.':
             self.state = 'Режим работы с запуском'
             self.statusbar.showMessage(self.state)
             self.mdiArea.activeSubWindow().setWidget(self.text)
-            self.add_stanok_action.setVisible(True)
-            self.change_font_action.setVisible(True)
-            self.save_zapusk_action.setVisible(True)
-            self.close_zapusk_action.setVisible(True)
+            self.move_mod_action.setVisible(False)
             self.spec_label.setVisible(True)
             self.spec_button.setVisible(True)
             self.mod_button.setVisible(True)
@@ -333,6 +340,20 @@ class Window(QMainWindow, Ui_mainWindow):
             if self.report_state is None:
                 self.text.clear()
                 self.text.insertPlainText(self.zapusk.rpt())
+
+        elif 'Станок' in item.parent().text(0):
+            self.state = 'Режим работы с модулями'
+            self.statusbar.showMessage(self.state)
+            self.mdiArea.activeSubWindow().setWidget(self.text)
+            self.spec_label.setVisible(False)
+            self.spec_button.setVisible(False)
+            self.mod_button.setVisible(False)
+            self.pack_type_button.setVisible(False)
+            self.stanok_button.setVisible(False)
+            self.move_mod_action.setVisible(True)
+            mod = CElModule(item.text(0), 'launch')
+            self.text.clear()
+            self.text.insertPlainText(mod.report())
 
     def print_rpt(self):
         self.report_state = 'zapusk'
@@ -357,7 +378,6 @@ class Window(QMainWindow, Ui_mainWindow):
     def change_font(self):
         dialog = QFontDialog()
         default_font = QFont('Courier', 8)
-        # dialog.setCurrentFont(default_font)
         font, ok = dialog.getFont(default_font)
         if ok:
             self.text.setFont(font)
