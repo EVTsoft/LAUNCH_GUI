@@ -15,6 +15,7 @@ import os
 import pprint
 from tkinter import *
 from CModDraw import CModDraw
+from itertools import zip_longest
 
 class CElModule():
     """ Класс электронного модуля"""
@@ -208,7 +209,7 @@ class CElModule():
 
     
     # Отчет по монтажу SMD компонент
-    def RepSMDprm(self,nIsp,side,angle=0):
+    def RepSMDprm(self,nIsp,side,angle=0,MNoz=[]):
         SCALE=20
         sp=self.GetIsp(nIsp)
         #----------------------
@@ -239,12 +240,13 @@ class CElModule():
         Rep2_str=f'm2,MARK_PIX,{Rep2_xy.x},{Rep2_xy.y},T,{c.tr_angle(m2.Angle):g},{m2.Des}'
 
 
-        #----------------------  
+        #---------------------- 
+        print('\n') 
         Noz_El_vk={}
         # Вывод элементов по дезигнаторам
         for nozzle in retSMT[1].keys():
             # Перебераем головки установщика 
-            Noz_El_vk[nozzle]=[str(First_str),str(Rep1_str),str(Rep2_str)]
+            Noz_El_vk[nozzle]=[]#[str(First_str),str(Rep1_str),str(Rep2_str)]
             for el in retSMT[1][nozzle]:
                 # Для каждой головки итерируем список компоненнтов
                 #print('   ',el)
@@ -256,13 +258,63 @@ class CElModule():
                         #print('                       ',dz)
                         delXY=c.tr_plt_nscale(dz.XY).norm_round(nxy)
                         Noz_El_vk[nozzle].append(str(f'{dz.Des},{el_str},{delXY.x},{delXY.y},T,{c.tr_angle(dz.Angle):g},{el_ft}'))
-                        CMDraw.DzDraw(dz,CXY(el.mt.x,el.mt.y)/2.,nozzle)             
+                        CMDraw.DzDraw(dz,CXY(el.mt.x,el.mt.y)/2.,nozzle)     
+            print(f'На головке-{nozzle} всего элементов: {len(Noz_El_vk[nozzle])}')                    
         #--------------
-        # Генерация программы для установщика SMD
-        for nz in Noz_El_vk.keys():
-            print('\n>>Головка:',nz)
-            for str_prm in Noz_El_vk[nz]:
-                print(str_prm)
+        if(len(MNoz)!=0):
+            # Генерация программы для установщика SMD
+            for N_Prm in MNoz:
+                # Проверка наличия очередной пары головок в программе установщика
+                if all(k in Noz_El_vk for k in N_Prm):
+                    print(f'\nГенерация программы установщика PnP {N_Prm[0]}{N_Prm[1]}')
+                    N0_lst=[]
+                    N1_lst=[]
+                    # Для каждой пары головок
+                    if(N_Prm[0]!=N_Prm[1]):
+                        # Отработка разных головок
+                        N0_lst=Noz_El_vk[N_Prm[0]].copy()
+                        N1_lst=Noz_El_vk[N_Prm[1]].copy()
+                        print(f'Всего элементов: {len(N0_lst)+len(N1_lst)}. На головке-{N_Prm[0]} ({len(N0_lst)}) и головке-{N_Prm[1]} ({len(N1_lst)})')
+                    else:
+                        # Отработка одинаковых головок
+                        nz_keys=N_Prm[0]
+                        prev_el0=''
+                        i_el0=0
+                        prev_el1=''
+                        i_el1=0
+                        for elstr in Noz_El_vk[nz_keys]:
+                            def addel(lst, i):
+                                lst.append(elstr.strip())
+                                return i+1
+                            els=elstr.split(',')
+                            el=els[1]+'_'+els[6]
+                            #print(el)
+                            if   el==prev_el0 : i_el0=addel(N0_lst,i_el0)
+                            elif el==prev_el1 : i_el1=addel(N1_lst,i_el1)
+                            else:
+                                if i_el0<=i_el1 :
+                                    prev_el0=el
+                                    i_el0=addel(N0_lst,i_el0)  
+                                else:
+                                    prev_el1=el
+                                    i_el1=addel(N1_lst,i_el1)
+                        print(f'Всего элементов: {i_el0+i_el1} на головке-{nz_keys}')
+                    # Генерация непосредственно программы для станка  
+                    #print(N_Prm[0],' ',N_Prm[1])    
+                    #print('N0_lst=',len(N0_lst))          
+                    #pprint.pprint(N0_lst)
+                    #print('N1_lst=',len(N1_lst))          
+                    #pprint.pprint(N1_lst)
+                    str_prm=[str(First_str),str(Rep1_str),str(Rep2_str)]
+                    for crt in zip_longest(N0_lst, N1_lst): 
+                        def out(ct):
+                            if ct!=None:
+                                str_prm.append(ct)
+                        out(crt[0])
+                        out(crt[1])    
+                    #pprint.pprint(str_prm)   
+                else:
+                    print('Указаны отсутствующие в словаре модуля головки-{N_Prm}. Генерация программы установщика PnP прервана.')
         #--------------
         CMDraw.RootLoop()
         #
@@ -286,11 +338,14 @@ def main():
     spec=CElModule.Pick(nmodule,LAUNCHDIR)
     #spec=CElModule(nmodule,LAUNCHDIR)
    
+    MNozzle=[('N503','N503'),('N504','N505')]
+
+
     #spec.RepSMDprm(0,'F')
     #spec.RepSMDprm(0,'F',90)
     #spec.RepSMDprm(0,'F',180)
     #spec.RepSMDprm(0,'F',270)
-    spec.RepSMDprm(0,'B')
+    spec.RepSMDprm(0,'B',0,MNozzle)
     #spec.RepSMDprm(0,'B',90)
     #spec.RepSMDprm(0,'B',180)
     #spec.RepSMDprm(0,'B',270)
