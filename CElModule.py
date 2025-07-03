@@ -263,10 +263,14 @@ class CElModule():
         #--------------
         if(len(MNoz)!=0):
             # Генерация программы для установщика SMD
+            #DirName=f'{side}#{self.__metadata['title']}.{self.__metadata['revision']}'.replace('.','(') +f')_{self.__metadata['date']}'.replace(' ','-').replace(':','!').replace('.','!')
+            DirName=f'{self.__metadata['title']}.{self.__metadata['revision']}'.replace('.','(') +f')_{self.__metadata['date']}'.replace(' ','-').replace(':','!').replace('.','!')
+            print(DirName)
             for N_Prm in MNoz:
                 # Проверка наличия очередной пары головок в программе установщика
                 if all(k in Noz_El_vk for k in N_Prm):
-                    print(f'\nГенерация программы установщика PnP {N_Prm[0]}{N_Prm[1]}')
+                    NamePrm=side+'_'+N_Prm[0]+'_'+N_Prm[1]
+                    print(f'\nГенерация программы установщика PnP {NamePrm}')
                     N0_lst=[]
                     N1_lst=[]
                     # Для каждой пары головок
@@ -300,11 +304,6 @@ class CElModule():
                                     i_el1=addel(N1_lst,i_el1)
                         print(f'Всего элементов: {i_el0+i_el1} на головке-{nz_keys}')
                     # Генерация непосредственно программы для станка  
-                    #print(N_Prm[0],' ',N_Prm[1])    
-                    #print('N0_lst=',len(N0_lst))          
-                    #pprint.pprint(N0_lst)
-                    #print('N1_lst=',len(N1_lst))          
-                    #pprint.pprint(N1_lst)
                     str_prm=[str(First_str),str(Rep1_str),str(Rep2_str)]
                     for crt in zip_longest(N0_lst, N1_lst): 
                         def out(ct):
@@ -312,7 +311,22 @@ class CElModule():
                                 str_prm.append(ct)
                         out(crt[0])
                         out(crt[1])    
-                    #pprint.pprint(str_prm)   
+                    #----------------------------------
+                    # Запись созданной программы на диск
+                    nside='/TOP'
+                    if side=='B': nside='/BOTTOM'
+                    NameDir=self.__ModDir+'PnP/'+ DirName+nside
+                    FullName=NameDir+'/'+NamePrm+'.csv'
+                    print(FullName)
+                    if not os.path.exists(NameDir):
+                        os.makedirs(NameDir)
+                    with open(FullName, "w",encoding='utf-8') as fprm: 
+                        for sp in str_prm:
+                            fprm.write(sp)
+                            fprm.write('\n')
+                    #----------------------------------
+
+
                 else:
                     print('Указаны отсутствующие в словаре модуля головки-{N_Prm}. Генерация программы установщика PnP прервана.')
         #--------------
