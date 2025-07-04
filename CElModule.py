@@ -256,8 +256,10 @@ class CElModule():
                         #print('                       ',dz)
                         delXY=c.tr_plt_nscale(dz.XY).norm_round(nxy)
                         Noz_El_vk[nozzle].append(str(f'{dz.Des},{el_str},{delXY.x},{delXY.y},T,{c.tr_angle(dz.Angle):g},{el_ft}'))
-                        CMDraw.DzDraw(dz,CXY(el.mt.x,el.mt.y)/2.,nozzle)     
-            print(f'На головке-{nozzle} всего элементов: {len(Noz_El_vk[nozzle])}')                    
+                        CMDraw.DzDraw(dz,CXY(el.mt.x,el.mt.y)/2.,nozzle)   
+            kel=len(Noz_El_vk[nozzle])
+            if kel==0: del Noz_El_vk[nozzle]              
+            print(f'На головке-{nozzle} всего элементов: {kel}')                    
         #--------------
         # Подготовка массива пар головок
         MNoz=[]
