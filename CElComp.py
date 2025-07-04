@@ -84,8 +84,12 @@ class CElComponent:
         return self.__name.ljust(LNAME) +str(self.__fun_type).ljust(LFUNTYPE) +str(self.__mnt_type)
     def __str__(self):
         return self.__strel()
+    
     def prm_type(self):
-        if isinstance(self.__fun_type,EC) | isinstance(self.__fun_type,L):
+        if      isinstance(self.__fun_type,EC)  \
+            |   isinstance(self.__fun_type,L)   \
+            |   (isinstance(self.__fun_type,R) & (self.ft.fun_type().strip()!='R'))   \
+            |   (isinstance(self.__fun_type,C) & (self.ft.fun_type().strip()!='C'))   :
             return self.__name
         else:
             return self.__fun_type.fprm_type()

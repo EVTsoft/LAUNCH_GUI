@@ -209,7 +209,7 @@ class CElModule():
 
     
     # Отчет по монтажу SMD компонент
-    def RepSMDprm(self,nIsp,side,angle=0,MNoz=[]):
+    def RepSMDprm(self,nIsp,side,angle=0,max_nz=60):
         SCALE=20
         sp=self.GetIsp(nIsp)
         #----------------------
@@ -238,15 +238,13 @@ class CElModule():
         Rep2_xy=c.tr_plt_nscale(m2.XY).norm_round(nxy)
         Rep1_str=f'm1,MARK_PIX,{Rep1_xy.x},{Rep1_xy.y},T,{c.tr_angle(m1.Angle):g},{m1.Des}'
         Rep2_str=f'm2,MARK_PIX,{Rep2_xy.x},{Rep2_xy.y},T,{c.tr_angle(m2.Angle):g},{m2.Des}'
-
-
         #---------------------- 
         print('\n') 
         Noz_El_vk={}
         # Вывод элементов по дезигнаторам
         for nozzle in retSMT[1].keys():
             # Перебераем головки установщика 
-            Noz_El_vk[nozzle]=[]#[str(First_str),str(Rep1_str),str(Rep2_str)]
+            Noz_El_vk[nozzle]=[]
             for el in retSMT[1][nozzle]:
                 # Для каждой головки итерируем список компоненнтов
                 #print('   ',el)
@@ -261,15 +259,34 @@ class CElModule():
                         CMDraw.DzDraw(dz,CXY(el.mt.x,el.mt.y)/2.,nozzle)     
             print(f'На головке-{nozzle} всего элементов: {len(Noz_El_vk[nozzle])}')                    
         #--------------
+        # Подготовка массива пар головок
+        MNoz=[]
+        lst_nz=[]
+        for nzll in Noz_El_vk.keys():
+            lst_nz.append((nzll,len(Noz_El_vk[nzll])))
+        lst_nz.sort(key=lambda i : i[1],reverse=True)
+        #pprint.pprint(lst_nz)
+        # отсортированный по элементам список головок
+        nchet=len(lst_nz)%2
+        iterator=iter(lst_nz)
+        for nzp in iterator:
+            if (nzp[1]>=max_nz) | (nchet==1):
+                # Превышен порог в головке или у нас нечетное число головок
+                nchet=(nchet+1)%2
+                MNoz.append((nzp[0],nzp[0]))
+            else:
+                MNoz.append((nzp[0],next(iterator)[0]))   
+        #pprint.pprint(MNoz)
+        print(f'Будут сгенерированны программы для следующих пар головок - {MNoz}')             
+        #--------------
         if(len(MNoz)!=0):
             # Генерация программы для установщика SMD
-            #DirName=f'{side}#{self.__metadata['title']}.{self.__metadata['revision']}'.replace('.','(') +f')_{self.__metadata['date']}'.replace(' ','-').replace(':','!').replace('.','!')
             DirName=f'{self.__metadata['title']}.{self.__metadata['revision']}'.replace('.','(') +f')_{self.__metadata['date']}'.replace(' ','-').replace(':','!').replace('.','!')
-            print(DirName)
+            print(f'Каталог модуля: \"{DirName}\"')
             for N_Prm in MNoz:
                 # Проверка наличия очередной пары головок в программе установщика
                 if all(k in Noz_El_vk for k in N_Prm):
-                    NamePrm=side+'_'+N_Prm[0]+'_'+N_Prm[1]
+                    NamePrm=side+f'-{angle}'+'-'+N_Prm[0]+'_'+N_Prm[1]
                     print(f'\nГенерация программы установщика PnP {NamePrm}')
                     N0_lst=[]
                     N1_lst=[]
@@ -292,7 +309,6 @@ class CElModule():
                                 return i+1
                             els=elstr.split(',')
                             el=els[1]+'_'+els[6]
-                            #print(el)
                             if   el==prev_el0 : i_el0=addel(N0_lst,i_el0)
                             elif el==prev_el1 : i_el1=addel(N1_lst,i_el1)
                             else:
@@ -325,17 +341,12 @@ class CElModule():
                             fprm.write(sp)
                             fprm.write('\n')
                     #----------------------------------
-
-
                 else:
                     print('Указаны отсутствующие в словаре модуля головки-{N_Prm}. Генерация программы установщика PnP прервана.')
         #--------------
         CMDraw.RootLoop()
         #
         return
-
-
-        
 
 
 #======================================================================================================================= Тест ==
@@ -345,23 +356,21 @@ def main():
     # Получение списка файлов для обработки 
     LAUNCHDIR = 'launch'
 
-    nmodule='B3n2-DC-DC_r1'#.html'
-    #nmodule='B3n2-ManBot_r1'#.html'
-    #nmodule='B3n2-MeasUDiv_r1'#.html'
-
+    #nmodule='B3n2-DC-DC_r1'
+    #nmodule='B3n2-ManBot_r1'
+    #nmodule='B3n2-MeasUDiv_r1'
+    nmodule='B3n2-TU_r1'
     spec=CElModule.Pick(nmodule,LAUNCHDIR)
     #spec=CElModule(nmodule,LAUNCHDIR)
-   
-    MNozzle=[('N503','N503'),('N504','N505')]
 
 
-    #spec.RepSMDprm(0,'F')
+    spec.RepSMDprm(0,'F')
     #spec.RepSMDprm(0,'F',90)
     #spec.RepSMDprm(0,'F',180)
     #spec.RepSMDprm(0,'F',270)
-    spec.RepSMDprm(0,'B',0,MNozzle)
+    #spec.RepSMDprm(0,'B')
     #spec.RepSMDprm(0,'B',90)
-    #spec.RepSMDprm(0,'B',180)
+    spec.RepSMDprm(0,'B',180)
     #spec.RepSMDprm(0,'B',270)
     
     
