@@ -209,12 +209,13 @@ class CElModule():
 
     
     # Отчет по монтажу SMD компонент
-    def RepSMDprm(self,nIsp,side,angle=0,max_nz=60):
-        SCALE=20
+    def RepSMDprm(self,nIsp,side,angle=0,scl=10,max_nz=60,tst=False):
+        SCALE=scl
         sp=self.GetIsp(nIsp)
         #----------------------
         retSMT=sp.rep_SMD_nozzle()
         #----------------------
+        print(f'Размер печатной платы: {self.__SizeBrd} mm.')
         c=tCXY(SCALE,self.__SizeBrd,side,angle)
         # Объект графического отображения       
         CMDraw=CModDraw(self.__ModName,c)
@@ -250,6 +251,7 @@ class CElModule():
                 #print('   ',el)
                 el_str=el.mt.fp.strip().replace(' ','_')
                 el_ft=el.prm_type()
+                #print(el_ft)
                 for dz in self.__PerEl[el.UID]:
                     # Для каждого компонента итерируем список дезигнаторов
                     if dz.Layer==side : # Отсекаем те, которые находятся не на выводимой стороне.
@@ -257,6 +259,8 @@ class CElModule():
                         delXY=c.tr_plt_nscale(dz.XY).norm_round(nxy)
                         Noz_El_vk[nozzle].append(str(f'{dz.Des},{el_str},{delXY.x},{delXY.y},T,{c.tr_angle(dz.Angle):g},{el_ft}'))
                         CMDraw.DzDraw(dz,CXY(el.mt.x,el.mt.y)/2.,nozzle)   
+                    if tst: # Если это генерация тестовой программы, то выходим после одного дезигнатора на компонент
+                        break    
             kel=len(Noz_El_vk[nozzle])
             if kel==0: del Noz_El_vk[nozzle]              
             print(f'На головке-{nozzle} всего элементов: {kel}')                    
@@ -289,6 +293,8 @@ class CElModule():
                 # Проверка наличия очередной пары головок в программе установщика
                 if all(k in Noz_El_vk for k in N_Prm):
                     NamePrm=side+f'-{angle}'+'-'+N_Prm[0]+'_'+N_Prm[1]
+                    if tst:
+                        NamePrm='tst_'+NamePrm
                     print(f'\nГенерация программы установщика PnP {NamePrm}')
                     N0_lst=[]
                     N1_lst=[]
@@ -311,6 +317,7 @@ class CElModule():
                                 return i+1
                             els=elstr.split(',')
                             el=els[1]+'_'+els[6]
+                            #print(el)
                             if   el==prev_el0 : i_el0=addel(N0_lst,i_el0)
                             elif el==prev_el1 : i_el1=addel(N1_lst,i_el1)
                             else:
@@ -343,6 +350,23 @@ class CElModule():
                             fprm.write(sp)
                             fprm.write('\n')
                     #----------------------------------
+                    # Вывести в  txt файл расклад компонент по головкам
+                    if not tst:
+                        rasklad_nz=[]
+                        rasklad_nz.append(f'\nНа головке №1 - {N_Prm[0]} Следующие компоненты:')
+                        els_0=list(set([el.split(',')[1]+' '+el.split(',')[6] for el in N0_lst]))
+                        els_0.sort()
+                        rasklad_nz+=els_0
+                        rasklad_nz.append(f'\nНа головке №2 - {N_Prm[1]} Следующие компоненты:')
+                        els_1=list(set([el.split(',')[1]+' '+el.split(',')[6] for el in N1_lst]))
+                        els_1.sort()
+                        rasklad_nz+=els_1
+                        #pprint.pprint(rasklad_nz)
+                        FullNameNz=NameDir+'/'+NamePrm+'.txt'
+                        with open(FullNameNz, "w",encoding='utf-8') as fprm: 
+                            for sp in rasklad_nz:
+                                fprm.write(sp)
+                                fprm.write('\n')       
                 else:
                     print('Указаны отсутствующие в словаре модуля головки-{N_Prm}. Генерация программы установщика PnP прервана.')
         #--------------
@@ -358,21 +382,25 @@ def main():
     # Получение списка файлов для обработки 
     LAUNCHDIR = 'launch'
 
-    #nmodule='B3n2-DC-DC_r1'
+    nmodule='B3n2-DC-DC_r1'
     #nmodule='B3n2-ManBot_r1'
+    #nmodule='B3n2-ManTop_r1'
+    #nmodule='B3n2-LD_r1'
     #nmodule='B3n2-MeasUDiv_r1'
-    nmodule='B3n2-TU_r1'
+    #nmodule='B3n2-TU_r1'
     spec=CElModule.Pick(nmodule,LAUNCHDIR)
     #spec=CElModule(nmodule,LAUNCHDIR)
 
 
-    spec.RepSMDprm(0,'F')
+    spec.RepSMDprm(0,'F',0,8)
+    spec.RepSMDprm(0,'F',0,8,60,True)
     #spec.RepSMDprm(0,'F',90)
     #spec.RepSMDprm(0,'F',180)
     #spec.RepSMDprm(0,'F',270)
     #spec.RepSMDprm(0,'B')
-    #spec.RepSMDprm(0,'B',90)
-    spec.RepSMDprm(0,'B',180)
+    spec.RepSMDprm(0,'B',0,8)
+    spec.RepSMDprm(0,'B',0,8,60,True)
+    #spec.RepSMDprm(0,'B',180)
     #spec.RepSMDprm(0,'B',270)
     
     
