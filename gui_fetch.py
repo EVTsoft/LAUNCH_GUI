@@ -8,14 +8,34 @@ import resources
 import subprocess
 import json
 
-from PyQt5.QtCore import Qt, QObject, QSettings, QLocale, QTranslator, QSize
-from PyQt5.QtGui import QBrush, QIcon, QPixmap, QFont, QColor, QTextCursor
+from PyQt5.QtCore import Qt, QObject, QSettings, QLocale, QTranslator, QSize, QMimeData, QByteArray, pyqtSignal
+from PyQt5.QtGui import QBrush, QIcon, QPixmap, QFont, QColor, QTextCursor, QDrag
 from PyQt5.QtWidgets import QApplication, QMainWindow, QFileDialog, QMdiSubWindow, QPlainTextEdit, \
     QTreeWidgetItem, QAction, QTextEdit, QMdiArea, QMenu, QDialog, QLabel, QFontDialog, QHBoxLayout, QVBoxLayout, \
     QPushButton, QWidget, QToolButton, QTreeWidget, QMessageBox
 from modfab_ui import Ui_mainWindow
 from CLaunch import CLaunch
 from CElModule import CElModule
+
+
+def change_tree_dict_to_json(launch_fn, tree_dict):
+    json_lst = []
+    for inc, st_dict in enumerate(tree_dict[launch_fn]):
+        for mod, var_list in st_dict.items():
+            json_item = {"Stanok": inc + 1, "bommod": mod, "mtypes": []}
+            for var in var_list:
+                json_item["mtypes"].append({"quantity": var[1], "var": var[0]})
+            json_lst.append(json_item)
+    print(json_lst)
+    return json_lst
+
+
+class DropSignal(QObject):
+    item_dropped = pyqtSignal()
+
+    def drop_handle(self):
+        self.item_dropped.emit()
+        print('ok')
 
 
 class ActionButton(QToolButton):
@@ -35,7 +55,191 @@ class MyTreeWidget(QTreeWidget):
         super().__init__(parent)
         self.setDragEnabled(True)
         self.setAcceptDrops(True)
+        self.moved_item = None
         self.setDragDropMode(QTreeWidget.InternalMove)
+        self.zapusk = None
+        self.tree_dict = {}
+        self.drop_signal = None
+
+    def build_tree(self, zapusk):
+        self.zapusk = zapusk
+        data = zapusk.mod_bom
+        self.setColumnCount(2)
+        self.setHeaderLabels(['Запуски', 'Кол-во'])
+        self.setColumnWidth(0, 190)
+        self.setColumnWidth(1, 40)
+        self.setAlternatingRowColors(True)
+        stylesheet = '''
+            QTreeWidget {
+                    alternate-background-color: #edf6fa;
+                    background: white
+                }
+            QHeaderView::section {
+                    background-color: #c5e1eb
+                }
+            QHeaderView::section:last {
+                    background-color: #adadad
+                }
+            QColumnView {
+                    background: #b7bbbd
+            '''
+        self.setStyleSheet(stylesheet)
+        zap = zapusk.launch_fn.split('/')[-1]
+        self.tree_dict[zap] = []
+        lst_stanok = list(set([st['Stanok'] for st in data]))
+        for st in lst_stanok:
+            self.tree_dict[zap].append({f'Станок {st}': []})
+            lst_mod_dict = [el for el in data if el['Stanok'] == st]
+            mod_dict = {}
+            for el in lst_mod_dict:
+                var_list = []
+                for elem in el['mtypes']:
+                    var_list.append([elem['var'], elem['quantity']])
+                mod_dict[el['bommod']] = var_list
+            self.tree_dict[zap][st - 1][f'Станок {st}'] = mod_dict
+        zap_item = QTreeWidgetItem()
+        zap_item.setText(0, zapusk.launch_fn.split('/')[-1])
+        zap_item.setBackground(1, QBrush(QColor('#d6d6d6')))
+        zap_item.setFlags(Qt.ItemIsEnabled | Qt.ItemIsSelectable)
+        self.addTopLevelItem(zap_item)
+        for i, st_dict in enumerate(self.tree_dict[zap]):
+            st_child = QTreeWidgetItem()
+            st_child.setBackground(1, QBrush(QColor('#d6d6d6')))
+            st_child.setFlags(Qt.ItemIsEnabled | Qt.ItemIsSelectable | Qt.ItemIsDropEnabled)
+            st_child.setText(0, f'Станок {i + 1}')
+            for key, values in st_dict[f'Станок {i + 1}'].items():
+                mod_child = QTreeWidgetItem()
+                mod_child.setText(0, key)
+                for value in values:
+                    var_child = QTreeWidgetItem()
+                    var_child.setText(0, f'исп. {value[0]}: ')
+                    var_child.setTextAlignment(0, Qt.AlignRight)
+                    var_child.setText(1, value[1])
+                    var_child.setBackground(1, QBrush(QColor('#f2f2f2')))
+                    var_child.setFlags(Qt.ItemIsEnabled | Qt.ItemIsSelectable | Qt.ItemIsEditable)
+                    mod_child.addChild(var_child)
+                mod_children_list = []
+                mod_value = 0
+                for b in [0, 1]:
+                    if mod_child.child(b):
+                        mod_children_list.append(mod_child.child(b))
+                for var in mod_children_list:
+                    mod_value += int(var.text(1))
+                mod_child.setText(1, str(mod_value))
+                mod_child.setForeground(1, QBrush(Qt.darkGray))
+                mod_child.setBackground(1, QBrush(QColor('#d6d6d6')))
+                mod_child.setFlags(
+                    (Qt.ItemIsSelectable | Qt.ItemIsDragEnabled | Qt.ItemIsEnabled) & ~Qt.ItemIsDropEnabled)
+                st_child.addChild(mod_child)
+            zap_item.addChild(st_child)
+        self.addTopLevelItem(zap_item)
+        zap_item.setExpanded(True)
+        c = zap_item.childCount()
+        for st in range(c):
+            zap_item.child(st).setExpanded(True)
+            for mod in range(zap_item.child(st).childCount()):
+                zap_item.child(st).child(mod).setExpanded(True)
+                for var in range(zap_item.child(st).child(mod).childCount()):
+                    zap_item.child(st).child(mod).child(var).setExpanded(True)
+
+    def dropEvent(self, event):
+        super().dropEvent(event)
+        self.update_dict(self.zapusk)
+        self.drop_signal = DropSignal()
+        self.drop_signal.drop_handle()
+
+    def update_dict(self, zapusk):
+        inc = 0
+        for st_dict in self.tree_dict[zapusk.launch_fn.split('/')[-1]]:
+            st_dict[f'Станок {inc + 1}'] = {}
+            for item_index in range(self.topLevelItem(0).child(inc).childCount()):
+                mod_text = self.topLevelItem(0).child(inc).child(item_index).text(0)
+                var_list = []
+                for var in range(self.topLevelItem(0).child(inc).child(item_index).childCount()):
+                    var_item = self.topLevelItem(0).child(inc).child(item_index).child(var)
+                    var_list.append([var_item.text(0).split()[1].strip(':'), var_item.text(1)])
+                st_dict[f'Станок {inc + 1}'][mod_text] = var_list
+            inc += 1
+        self.restore_tree(self.zapusk)
+
+    def restore_tree(self, zapusk):
+        self.setColumnCount(2)
+        self.setHeaderLabels(['Запуски', 'Кол-во'])
+        self.setColumnWidth(0, 190)
+        self.setColumnWidth(1, 40)
+        self.setAlternatingRowColors(True)
+        stylesheet = '''
+                    QTreeWidget {
+                            alternate-background-color: #edf6fa;
+                            background: white
+                        }
+                    QHeaderView::section {
+                            background-color: #c5e1eb
+                        }
+                    QHeaderView::section:last {
+                            background-color: #adadad
+                        }
+                    QColumnView {
+                            background: #b7bbbd
+                    '''
+        self.setStyleSheet(stylesheet)
+        self.clear()
+        zap_item = QTreeWidgetItem()
+        zap_item.setText(0, zapusk.launch_fn.split('/')[-1])
+        zap_item.setBackground(1, QBrush(QColor('#d6d6d6')))
+        zap_item.setFlags(Qt.ItemIsEnabled | Qt.ItemIsSelectable)
+        self.addTopLevelItem(zap_item)
+        for i, st_dict in enumerate(self.tree_dict[zapusk.launch_fn.split('/')[-1]]):
+            st_child = QTreeWidgetItem()
+            st_child.setBackground(1, QBrush(QColor('#d6d6d6')))
+            st_child.setFlags(Qt.ItemIsEnabled | Qt.ItemIsSelectable | Qt.ItemIsDropEnabled)
+            st_child.setText(0, f'Станок {i + 1}')
+            for key, values in st_dict[f'Станок {i + 1}'].items():
+                mod_child = QTreeWidgetItem()
+                mod_child.setText(0, key)
+                for value in values:
+                    var_child = QTreeWidgetItem()
+                    var_child.setText(0, f'исп. {value[0]}: ')
+                    var_child.setTextAlignment(0, Qt.AlignRight)
+                    var_child.setText(1, value[1])
+                    var_child.setBackground(1, QBrush(QColor('#f2f2f2')))
+                    var_child.setFlags(Qt.ItemIsEnabled | Qt.ItemIsSelectable | Qt.ItemIsEditable)
+                    mod_child.addChild(var_child)
+                mod_children_list = []
+                mod_value = 0
+                for b in [0, 1]:
+                    if mod_child.child(b):
+                        mod_children_list.append(mod_child.child(b))
+                for var in mod_children_list:
+                    mod_value += int(var.text(1))
+                mod_child.setText(1, str(mod_value))
+                mod_child.setForeground(1, QBrush(Qt.darkGray))
+                mod_child.setBackground(1, QBrush(QColor('#d6d6d6')))
+                mod_child.setFlags(
+                    (Qt.ItemIsSelectable | Qt.ItemIsDragEnabled | Qt.ItemIsEnabled) & ~Qt.ItemIsDropEnabled)
+                st_child.addChild(mod_child)
+            zap_item.addChild(st_child)
+        self.addTopLevelItem(zap_item)
+        zap_item.setExpanded(True)
+        c = zap_item.childCount()
+        for st in range(c):
+            zap_item.child(st).setExpanded(True)
+            for mod in range(zap_item.child(st).childCount()):
+                zap_item.child(st).child(mod).setExpanded(True)
+                for var in range(zap_item.child(st).child(mod).childCount()):
+                    zap_item.child(st).child(mod).child(var).setExpanded(True)
+
+
+# class MyTreeWidgetItem(QTreeWidgetItem, QWidget):
+#     def __init__(self):
+#         super().__init__()
+#
+#     def mouseMoveEvent(self, event):
+#         drag = QDrag(self)
+#         mod_name = self.text(0).encode('utf-16')
+#         mime = QMimeData()
+#         mime.setData('MoveTreeItem', QByteArray(mod_name))
+#         drag.exec_(Qt.MoveAction)
 
 
 class Window(QMainWindow, Ui_mainWindow):
@@ -54,6 +258,7 @@ class Window(QMainWindow, Ui_mainWindow):
         self.temp_file_name = None
         self.temp_json = None
         self.launch_file_name = ''
+        self.tree_dict = None
         self.my_treeWidget = MyTreeWidget()
         self.my_treeWidget.setHeaderLabel('')
         self.my_treeWidget.setGeometry(0, 0, 310, 585)
@@ -123,6 +328,7 @@ class Window(QMainWindow, Ui_mainWindow):
         self.text.setFont(self.monospace_font)
         self.text.setGeometry(0, 0, 1500, 480)
         self.text.setLineWrapMode(0)
+        self.drop_receiver = None
         self.connect_signals()
         self.restore_state()
         self.mdiArea.setViewMode(QMdiArea.TabbedView)
@@ -144,6 +350,8 @@ class Window(QMainWindow, Ui_mainWindow):
         self.change_font_action.triggered.connect(self.change_font)
         self.save_zapusk_action.triggered.connect(self.save_zapusk)
         # self.close_zapusk_action.triggered.connect(self.close_zapusk)
+        self.drop_receiver = DropSignal()
+        self.drop_receiver.item_dropped.connect(self.handle_moved_item)
 
     def restore_state(self):
         geometry = self.settings.value('windowGeometry')
@@ -155,6 +363,7 @@ class Window(QMainWindow, Ui_mainWindow):
         self.temp_json = self.settings.value('json')
         self.temp_file_name = self.settings.value('tempFile')
         self.launch_file_name = self.settings.value('lastOpenedFile')
+        self.tree_dict = self.settings.value('treeDict')
         if self.launch_file_name:
             subwindow = QMdiSubWindow()
             subwindow.setWindowTitle(self.launch_file_name)
@@ -164,7 +373,8 @@ class Window(QMainWindow, Ui_mainWindow):
             subwindow.showMaximized()
             self.mdiArea.setActiveSubWindow(subwindow)
             self.zapusk = CLaunch(self.launch_file_name)
-            self.launch_tree()
+            self.my_treeWidget.zapusk = self.zapusk
+            self.my_treeWidget.build_tree(self.zapusk)
         self.state = self.settings.value('lastState')
         if self.state:
             self.statusbar.showMessage(self.state)
@@ -226,80 +436,81 @@ class Window(QMainWindow, Ui_mainWindow):
         self.temp_json = json.loads(''.join(lines))
         print(self.temp_json)
         new_file.close()
-        self.launch_tree()
+        self.my_treeWidget.build_tree(self.zapusk)
+        self.tree_dict = self.my_treeWidget.tree_dict
 
-    def launch_tree(self):
-        data = self.zapusk.mod_bom
-        self.my_treeWidget.setColumnCount(2)
-        self.my_treeWidget.setHeaderLabels(['Запуски', 'Кол-во'])
-        self.my_treeWidget.setColumnWidth(0, 190)
-        self.my_treeWidget.setColumnWidth(1, 40)
-        self.my_treeWidget.setAlternatingRowColors(True)
-        stylesheet = '''
-        QTreeWidget { 
-                alternate-background-color: #edf6fa;
-                background: white
-            }
-        QHeaderView::section {
-                background-color: #c5e1eb
-            }
-        QHeaderView::section:last {
-                background-color: #adadad
-            }
-        QColumnView {
-                background: #b7bbbd     
-        '''
-        self.my_treeWidget.setStyleSheet(stylesheet)
-        zap = QTreeWidgetItem()
-        zap.setText(0, self.zapusk.launch_fn.split('/')[-1])
-        zap.setBackground(1, QBrush(QColor('#d6d6d6')))
-        zap.setFlags(Qt.ItemIsEnabled | Qt.ItemIsSelectable)
-        lst_stanok = list(set([st['Stanok'] for st in data]))
-        for st in lst_stanok:
-            st_child = QTreeWidgetItem()
-            st_child.setText(0, f'Станок {st}')
-            st_child.setBackground(1, QBrush(QColor('#d6d6d6')))
-            st_child.setFlags(Qt.ItemIsEnabled | Qt.ItemIsSelectable | Qt.ItemIsDropEnabled)
-            lst_mod_dict = [el for el in data if el['Stanok'] == st]
-            mod_dict = {}
-            for el in lst_mod_dict:
-                var_list = []
-                for elem in el['mtypes']:
-                    var_list.append((elem['var'], elem['quantity']))
-                mod_dict[el['bommod']] = var_list
-            for key, values in mod_dict.items():
-                mod_child = QTreeWidgetItem()
-                mod_child.setText(0, key)
-                for value in values:
-                    var_child = QTreeWidgetItem()
-                    var_child.setText(0, f'исп. {value[0]}: ')
-                    var_child.setTextAlignment(0, Qt.AlignRight)
-                    var_child.setText(1, value[1])
-                    var_child.setBackground(1, QBrush(QColor('#f2f2f2')))
-                    var_child.setFlags(Qt.ItemIsEnabled | Qt.ItemIsSelectable | Qt.ItemIsEditable)
-                    mod_child.addChild(var_child)
-                mod_children_list = []
-                mod_value = 0
-                for i in [0, 1]:
-                    if mod_child.child(i):
-                        mod_children_list.append(mod_child.child(i))
-                for var in mod_children_list:
-                    mod_value += int(var.text(1))
-                mod_child.setText(1, str(mod_value))
-                mod_child.setForeground(1, QBrush(Qt.darkGray))
-                mod_child.setBackground(1, QBrush(QColor('#d6d6d6')))
-                mod_child.setFlags((Qt.ItemIsSelectable | Qt.ItemIsDragEnabled | Qt.ItemIsEnabled) & ~Qt.ItemIsDropEnabled)
-                st_child.addChild(mod_child)
-            zap.addChild(st_child)
-        self.my_treeWidget.addTopLevelItem(zap)
-        zap.setExpanded(True)
-        c = zap.childCount()
-        for st in range(c):
-            zap.child(st).setExpanded(True)
-            for mod in range(zap.child(st).childCount()):
-                zap.child(st).child(mod).setExpanded(True)
-                for var in range(zap.child(st).child(mod).childCount()):
-                    zap.child(st).child(mod).child(var).setExpanded(True)
+    # def launch_tree(self):
+    #     data = self.zapusk.mod_bom
+    #     self.my_treeWidget.setColumnCount(2)
+    #     self.my_treeWidget.setHeaderLabels(['Запуски', 'Кол-во'])
+    #     self.my_treeWidget.setColumnWidth(0, 190)
+    #     self.my_treeWidget.setColumnWidth(1, 40)
+    #     self.my_treeWidget.setAlternatingRowColors(True)
+    #     stylesheet = '''
+    #     QTreeWidget {
+    #             alternate-background-color: #edf6fa;
+    #             background: white
+    #         }
+    #     QHeaderView::section {
+    #             background-color: #c5e1eb
+    #         }
+    #     QHeaderView::section:last {
+    #             background-color: #adadad
+    #         }
+    #     QColumnView {
+    #             background: #b7bbbd
+    #     '''
+    #     self.my_treeWidget.setStyleSheet(stylesheet)
+    #     zap = QTreeWidgetItem()
+    #     zap.setText(0, self.zapusk.launch_fn.split('/')[-1])
+    #     zap.setBackground(1, QBrush(QColor('#d6d6d6')))
+    #     zap.setFlags(Qt.ItemIsEnabled | Qt.ItemIsSelectable)
+    #     lst_stanok = list(set([st['Stanok'] for st in data]))
+    #     for st in lst_stanok:
+    #         st_child = QTreeWidgetItem()
+    #         st_child.setText(0, f'Станок {st}')
+    #         st_child.setBackground(1, QBrush(QColor('#d6d6d6')))
+    #         st_child.setFlags(Qt.ItemIsEnabled | Qt.ItemIsSelectable | Qt.ItemIsDropEnabled)
+    #         lst_mod_dict = [el for el in data if el['Stanok'] == st]
+    #         mod_dict = {}
+    #         for el in lst_mod_dict:
+    #             var_list = []
+    #             for elem in el['mtypes']:
+    #                 var_list.append((elem['var'], elem['quantity']))
+    #             mod_dict[el['bommod']] = var_list
+    #         for key, values in mod_dict.items():
+    #             mod_child = QTreeWidgetItem()
+    #             mod_child.setText(0, key)
+    #             for value in values:
+    #                 var_child = QTreeWidgetItem()
+    #                 var_child.setText(0, f'исп. {value[0]}: ')
+    #                 var_child.setTextAlignment(0, Qt.AlignRight)
+    #                 var_child.setText(1, value[1])
+    #                 var_child.setBackground(1, QBrush(QColor('#f2f2f2')))
+    #                 var_child.setFlags(Qt.ItemIsEnabled | Qt.ItemIsSelectable | Qt.ItemIsEditable)
+    #                 mod_child.addChild(var_child)
+    #             mod_children_list = []
+    #             mod_value = 0
+    #             for i in [0, 1]:
+    #                 if mod_child.child(i):
+    #                     mod_children_list.append(mod_child.child(i))
+    #             for var in mod_children_list:
+    #                 mod_value += int(var.text(1))
+    #             mod_child.setText(1, str(mod_value))
+    #             mod_child.setForeground(1, QBrush(Qt.darkGray))
+    #             mod_child.setBackground(1, QBrush(QColor('#d6d6d6')))
+    #             mod_child.setFlags((Qt.ItemIsSelectable | Qt.ItemIsDragEnabled | Qt.ItemIsEnabled) & ~Qt.ItemIsDropEnabled)
+    #             st_child.addChild(mod_child)
+    #         zap.addChild(st_child)
+    #     self.my_treeWidget.addTopLevelItem(zap)
+    #     zap.setExpanded(True)
+    #     c = zap.childCount()
+    #     for st in range(c):
+    #         zap.child(st).setExpanded(True)
+    #         for mod in range(zap.child(st).childCount()):
+    #             zap.child(st).child(mod).setExpanded(True)
+    #             for var in range(zap.child(st).child(mod).childCount()):
+    #                 zap.child(st).child(mod).child(var).setExpanded(True)
 
     def handle_tree_items(self, item):
         if item.text(0)[-1:-5:-1] == 'paz.':
@@ -330,7 +541,6 @@ class Window(QMainWindow, Ui_mainWindow):
             self.pack_type_button.setVisible(False)
             self.stanok_button.setVisible(False)
             self.move_mod_action.setVisible(True)
-            print(item.parent().indexOfChild(item))
             self.selected_mod = CElModule(item.text(0), 'launch')
             self.text.clear()
             self.text.insertPlainText(self.selected_mod.report())
@@ -390,6 +600,15 @@ class Window(QMainWindow, Ui_mainWindow):
             s = json.dumps(self.temp_json, indent=0)
             temp_file.write(s)
             temp_file.close()
+        # if self.tree_dict:
+        #     for i, var in enumerate(self.tree_dict[mod.parent().parent().text(0)][mod.parent().parent().indexOfChild(mod.parent())][mod.parent().text(0)][mod.text(0)]):
+        #         var[1] = mod.child(i).text(1)
+
+    def handle_moved_item(self):
+        print('ok')
+        self.tree_dict = self.my_treeWidget.tree_dict
+        json_lst = change_tree_dict_to_json(self.launch_file_name, self.tree_dict)
+        print(json_lst)
 
     def save_zapusk(self):
         q = QMessageBox()
@@ -447,6 +666,8 @@ class Window(QMainWindow, Ui_mainWindow):
         self.settings.setValue('lastSelectedModule', self.selected_mod)
         self.settings.setValue('json', self.temp_json)
         self.settings.setValue('tempFile', self.temp_file_name)
+        self.tree_dict = self.my_treeWidget.tree_dict
+        self.settings.setValue('treeDict', self.tree_dict)
         self.settings.sync()
         super().closeEvent(event)
 
