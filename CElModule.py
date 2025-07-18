@@ -259,8 +259,8 @@ class CElModule():
                         delXY=c.tr_plt_nscale(dz.XY).norm_round(nxy)
                         Noz_El_vk[nozzle].append(str(f'{dz.Des},{el_str},{delXY.x},{delXY.y},T,{c.tr_angle(dz.Angle):g},{el_ft}'))
                         CMDraw.DzDraw(dz,CXY(el.mt.x,el.mt.y)/2.,nozzle)   
-                    if tst: # Если это генерация тестовой программы, то выходим после одного дезигнатора на компонент
-                        break    
+                        if tst: # Если это генерация тестовой программы, то выходим после одного дезигнатора на компонент
+                            break    
             kel=len(Noz_El_vk[nozzle])
             if kel==0: del Noz_El_vk[nozzle]              
             print(f'На головке-{nozzle} всего элементов: {kel}')                    
@@ -338,8 +338,8 @@ class CElModule():
                         out(crt[1])    
                     #----------------------------------
                     # Запись созданной программы на диск
-                    nside='/TOP'
-                    if side=='B': nside='/BOTTOM'
+                    nside='/TOP'+str(nIsp)
+                    if side=='B': nside='/BOTTOM'+str(nIsp)
                     NameDir=self.__ModDir+'PnP/'+ DirName+nside
                     FullName=NameDir+'/'+NamePrm+'.csv'
                     print(FullName)
@@ -382,24 +382,28 @@ def main():
     # Получение списка файлов для обработки 
     LAUNCHDIR = 'launch'
 
-    nmodule='B3n2-DC-DC_r1'
+    #nmodule='B3n2-DC-DC_r1'
     #nmodule='B3n2-ManBot_r1'
     #nmodule='B3n2-ManTop_r1'
     #nmodule='B3n2-LD_r1'
-    #nmodule='B3n2-MeasUDiv_r1'
+    nmodule='B3n2-MeasUDiv_r1'
     #nmodule='B3n2-TU_r1'
     spec=CElModule.Pick(nmodule,LAUNCHDIR)
     #spec=CElModule(nmodule,LAUNCHDIR)
 
 
-    spec.RepSMDprm(0,'F',0,8)
-    spec.RepSMDprm(0,'F',0,8,60,True)
+    spec.RepSMDprm(0,'F',0,30)
+    spec.RepSMDprm(0,'F',0,30,60,True)
+    spec.RepSMDprm(1,'F',0,30)
+    spec.RepSMDprm(1,'F',0,30,60,True)
     #spec.RepSMDprm(0,'F',90)
     #spec.RepSMDprm(0,'F',180)
     #spec.RepSMDprm(0,'F',270)
     #spec.RepSMDprm(0,'B')
-    spec.RepSMDprm(0,'B',0,8)
-    spec.RepSMDprm(0,'B',0,8,60,True)
+    spec.RepSMDprm(0,'B',270,30)
+    spec.RepSMDprm(0,'B',270,30,60,True)
+    spec.RepSMDprm(1,'B',270,30)
+    spec.RepSMDprm(1,'B',270,30,60,True)
     #spec.RepSMDprm(0,'B',180)
     #spec.RepSMDprm(0,'B',270)
     
