@@ -366,7 +366,22 @@ class CElModule():
                         with open(FullNameNz, "w",encoding='utf-8') as fprm: 
                             for sp in rasklad_nz:
                                 fprm.write(sp)
-                                fprm.write('\n')       
+                                fprm.write('\n')      
+                    else:
+                        # Гененрация программы теста одного компонента, если это не R,L,C
+                        for i in range(3,len(str_prm)):
+                            elt=str_prm[i].split(',')
+                            if (elt[0][0]!='R') & (elt[0][0]!='C') & (elt[0][0]!='L') :
+                                NameTstElFile=NameDir+'/'+NamePrm[:-9]+elt[6]+'.csv'
+                                with open(NameTstElFile, "w",encoding='utf-8') as fprm: 
+                                    fprm.write(str_prm[0])
+                                    fprm.write('\n')    
+                                    fprm.write(str_prm[1])
+                                    fprm.write('\n')    
+                                    fprm.write(str_prm[2])
+                                    fprm.write('\n')
+                                    fprm.write(str_prm[i])
+                                    fprm.write('\n')   
                 else:
                     print('Указаны отсутствующие в словаре модуля головки-{N_Prm}. Генерация программы установщика PnP прервана.')
         #--------------
@@ -386,24 +401,25 @@ def main():
     #nmodule='B3n2-ManBot_r1'
     #nmodule='B3n2-ManTop_r1'
     #nmodule='B3n2-LD_r1'
-    nmodule='B3n2-MeasUDiv_r1'
+    #nmodule='B3n2-MeasUDiv_r1'
     #nmodule='B3n2-TU_r1'
+    nmodule='B3n2-TPb_r1'
     spec=CElModule.Pick(nmodule,LAUNCHDIR)
     #spec=CElModule(nmodule,LAUNCHDIR)
 
 
-    spec.RepSMDprm(0,'F',0,30)
-    spec.RepSMDprm(0,'F',0,30,60,True)
-    spec.RepSMDprm(1,'F',0,30)
-    spec.RepSMDprm(1,'F',0,30,60,True)
+    spec.RepSMDprm(0,'F',0,15)
+    spec.RepSMDprm(0,'F',0,15,60,True)
+    spec.RepSMDprm(1,'F',0,15)
+    spec.RepSMDprm(1,'F',0,15,60,True)
     #spec.RepSMDprm(0,'F',90)
     #spec.RepSMDprm(0,'F',180)
     #spec.RepSMDprm(0,'F',270)
     #spec.RepSMDprm(0,'B')
-    spec.RepSMDprm(0,'B',270,30)
-    spec.RepSMDprm(0,'B',270,30,60,True)
-    spec.RepSMDprm(1,'B',270,30)
-    spec.RepSMDprm(1,'B',270,30,60,True)
+    spec.RepSMDprm(0,'B',270,15)
+    spec.RepSMDprm(0,'B',270,15,60,True)
+    spec.RepSMDprm(1,'B',270,15)
+    spec.RepSMDprm(1,'B',270,15,60,True)
     #spec.RepSMDprm(0,'B',180)
     #spec.RepSMDprm(0,'B',270)
     

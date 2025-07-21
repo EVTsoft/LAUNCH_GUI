@@ -1,0 +1,4 @@
+Designator,Footprint,Center-X(mm),Center-Y(mm),Layer,Rotation,Comment
+m1,MARK_PIX,0.0,0.0,T,0,rep1
+m2,MARK_PIX,66.8,24.7,T,0,rep3
+DD8,BGA80P6X8-48,38.78,20.25,T,180,MX29LV320EBXEI-70G
