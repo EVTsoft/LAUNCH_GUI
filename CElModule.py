@@ -340,11 +340,17 @@ class CElModule():
                     # Запись созданной программы на диск
                     nside='/TOP'+str(nIsp)
                     if side=='B': nside='/BOTTOM'+str(nIsp)
-                    NameDir=self.__ModDir+'PnP/'+ DirName+nside
+                    if tst:
+                        NameDir=self.__ModDir+'PnP/'+ DirName+nside+'/TEST'
+                    else:
+                        NameDir=self.__ModDir+'PnP/'+ DirName+nside
+                    NozNameDir=self.__ModDir+'PnP/'+ DirName+nside+'/NOZZLE'
                     FullName=NameDir+'/'+NamePrm+'.csv'
                     print(FullName)
                     if not os.path.exists(NameDir):
                         os.makedirs(NameDir)
+                    if not os.path.exists(NozNameDir):    
+                        os.makedirs(NozNameDir)
                     with open(FullName, "w",encoding='utf-8') as fprm: 
                         for sp in str_prm:
                             fprm.write(sp)
@@ -361,8 +367,7 @@ class CElModule():
                         els_1=list(set([el.split(',')[1]+' '+el.split(',')[6] for el in N1_lst]))
                         els_1.sort()
                         rasklad_nz+=els_1
-                        #pprint.pprint(rasklad_nz)
-                        FullNameNz=NameDir+'/'+NamePrm+'.txt'
+                        FullNameNz=NozNameDir+'/'+NamePrm+'.txt'
                         with open(FullNameNz, "w",encoding='utf-8') as fprm: 
                             for sp in rasklad_nz:
                                 fprm.write(sp)
@@ -412,6 +417,10 @@ def main():
     spec.RepSMDprm(0,'F',0,15,60,True)
     spec.RepSMDprm(1,'F',0,15)
     spec.RepSMDprm(1,'F',0,15,60,True)
+    spec.RepSMDprm(0,'F',180,15)
+    spec.RepSMDprm(0,'F',180,15,60,True)
+    spec.RepSMDprm(1,'F',180,15)
+    spec.RepSMDprm(1,'F',180,15,60,True)
     #spec.RepSMDprm(0,'F',90)
     #spec.RepSMDprm(0,'F',180)
     #spec.RepSMDprm(0,'F',270)
@@ -420,6 +429,10 @@ def main():
     spec.RepSMDprm(0,'B',270,15,60,True)
     spec.RepSMDprm(1,'B',270,15)
     spec.RepSMDprm(1,'B',270,15,60,True)
+    spec.RepSMDprm(0,'B',90,15)
+    spec.RepSMDprm(0,'B',90,15,60,True)
+    spec.RepSMDprm(1,'B',90,15)
+    spec.RepSMDprm(1,'B',90,15,60,True)
     #spec.RepSMDprm(0,'B',180)
     #spec.RepSMDprm(0,'B',270)
     

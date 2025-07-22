@@ -1,0 +1,4 @@
+Designator,Footprint,Center-X(mm),Center-Y(mm),Layer,Rotation,Comment
+m1,MARK_PIX,0.0,0.0,T,270,rep1
+m2,MARK_PIX,24.7,66.8,T,270,rep3
+DD2,TSOP-54,14.28,37.7,T,270,AS4C64M8SC-7TIN
