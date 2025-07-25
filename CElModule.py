@@ -209,6 +209,7 @@ class CElModule():
 
     
     # Отчет по монтажу SMD компонент
+    # Специальны коммент
     def RepSMDprm(self,nIsp,side,angle=0,scl=10,max_nz=60,tst=False):
         SCALE=scl
         sp=self.GetIsp(nIsp)
