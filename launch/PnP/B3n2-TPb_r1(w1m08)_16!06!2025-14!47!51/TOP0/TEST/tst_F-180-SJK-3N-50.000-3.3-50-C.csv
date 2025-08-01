@@ -1,0 +1,4 @@
+Designator,Footprint,Center-X(mm),Center-Y(mm),Layer,Rotation,Comment
+m1,MARK_PIX,0.0,0.0,T,180,rep3
+m2,MARK_PIX,66.8,24.7,T,180,rep1
+DD5,SJK-3N,17.17,20.72,T,180,SJK-3N-50.000-3.3-50-C
