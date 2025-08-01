@@ -370,7 +370,7 @@ class Window(QMainWindow, Ui_mainWindow):
         self.save_zapusk_action.triggered.connect(self.save_zapusk)
         self.action_2.triggered.connect(self.save_zapusk)
         # self.close_zapusk_action.triggered.connect(self.close_zapusk)
-        self.move_mod_action.triggered.connect(self.move_mod)
+        # self.move_mod_action.triggered.connect(self.move_mod)
 
     def restore_state(self):
         geometry = self.settings.value('windowGeometry')
