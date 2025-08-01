@@ -1,4 +1,0 @@
-Designator,Footprint,Center-X(mm),Center-Y(mm),Layer,Rotation,Comment
-m1,MARK_PIX,0.0,0.0,T,180,rep3
-m2,MARK_PIX,66.8,24.7,T,180,rep1
-DD10,QFN-24,6.22,20.17,T,270,LAN8720Ai-CP-TR

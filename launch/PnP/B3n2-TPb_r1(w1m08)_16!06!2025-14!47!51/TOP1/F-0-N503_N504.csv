@@ -1,7 +1,0 @@
-Designator,Footprint,Center-X(mm),Center-Y(mm),Layer,Rotation,Comment
-m1,MARK_PIX,0.0,0.0,T,0,rep1
-m2,MARK_PIX,66.8,24.7,T,0,rep3
-C9,C0805,43.48,21.3,T,270,10u-10V-X7R
-DD10,QFN-24,60.58,4.53,T,90,LAN8720Ai-CP-TR
-C17,C0805,21.18,21.5,T,90,10u-10V-X7R
-DD5,SJK-3N,49.63,3.98,T,0,SJK-3N-50.000-3.3-50-C

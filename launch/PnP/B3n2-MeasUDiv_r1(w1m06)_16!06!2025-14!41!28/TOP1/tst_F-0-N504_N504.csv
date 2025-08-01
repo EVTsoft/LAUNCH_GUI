@@ -1,5 +1,0 @@
-Designator,Footprint,Center-X(mm),Center-Y(mm),Layer,Rotation,Comment
-m1,MARK_PIX,0.0,0.0,T,0,rep1
-m2,MARK_PIX,17.4,28.7,T,0,rep3
-R1,ERJP08,8.7,23.4,T,270,ERJP08D1503V
-R5,ERJP08,13.7,12.2,T,270,ERJP08D1071V

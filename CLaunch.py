@@ -100,8 +100,8 @@ class CLaunch:
         return sret
 
 def main():
-    #cz=CLaunch('zapusk_B3n2_2000.zap') 
-    cz=CLaunch('zapusk_TS337_измK2.zap')
+    cz=CLaunch('zapusk_B3n2_2000.zap') 
+    #cz=CLaunch('zapusk_TS337_измK2.zap')
     #cz=CLaunch('zapusk_00.zap') 
     #cz=CLaunch('zapusk_01.zap') 
     #cz=CLaunch('zapusk_010.zap') 
@@ -128,7 +128,7 @@ def main():
     #print(cz.rpt_SMDRLC_pack8(4))
     #print (cz.rpt_correlation())
 
-
+# [Console]::OutputEncoding = [System.Text.Encoding]::GetEncoding("windows-1251")
 if __name__ == "__main__":
     main()
 

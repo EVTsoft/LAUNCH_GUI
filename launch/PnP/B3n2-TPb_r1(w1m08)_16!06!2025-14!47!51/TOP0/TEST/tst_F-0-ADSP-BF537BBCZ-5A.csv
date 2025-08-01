@@ -1,4 +1,0 @@
-Designator,Footprint,Center-X(mm),Center-Y(mm),Layer,Rotation,Comment
-m1,MARK_PIX,0.0,0.0,T,0,rep1
-m2,MARK_PIX,66.8,24.7,T,0,rep3
-DD4,BGA80P12X12-182,55.12,18.15,T,180,ADSP-BF537BBCZ-5A
