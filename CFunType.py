@@ -54,6 +54,8 @@ class FunType(abc.ABC):
   # Распечатать элемент   
   def __str__(self):
     return self.fun_type()
+  def fprm_type(self):
+    return "Неопределенный тип элемента"
 
 #-----------------------------------------------------------------------------------
 
@@ -93,6 +95,10 @@ class R(FunType):
                 +str_nspace_f0 (self.__tol,3,'% ',0.,' ±') \
                 +str_nspace_f0 (self.__tcr,4,'ppm',0. )\
                 +str_nspace_str(self.ft,4,'','          ')
+  def fprm_type(self):
+    return      (str_norm(self.__res,0)).strip() \
+                +str_nspace_f0 (self.__tol,0,'%',0.,'-') \
+                +str_nspace_f0 (self.__tcr,0,'ppm',0.,'-' )
 #-----------------------------------------------------------------
 
 
@@ -122,6 +128,11 @@ class C(FunType):
                 +str_nspace_f0 (self.__volt,3,'V  ',0.,'  ') \
                 +str_nspace_str(self.__dlc,5,'',' ')\
                 +str_nspace_str(self.ft,4,'','          ')
+  def fprm_type(self):
+    return      str_norm(self.__cup,0) \
+                +str_nspace_f0 (self.__volt,0,'V',0.,'-') \
+                +str_nspace_str(self.__dlc,0,'','-')
+                
 #-----------------------------------------------------------------
 
 

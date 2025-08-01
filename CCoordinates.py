@@ -21,6 +21,11 @@ class CXY():
       return self-cxy      
 
 
+  def norm_round(self,cxy,rnd=7):
+      xy=self.newnorm(cxy)
+      return CXY(round(xy.x,rnd), round(xy.y,rnd))
+    
+
   def min(self,cxy):
       if self.__x > cxy.x : self.__x=cxy.x
       if self.__y > cxy.y : self.__y=cxy.y
@@ -79,9 +84,16 @@ class CXY():
   @property
   def x(self):
     return self.__x
+  #@x.setter
+  def set_x(self, ix):
+    self.__x=ix  
+  
   @property
   def y(self):
     return self.__y
+  #@y.setter
+  def set_y(self, iy):
+    self.__y=iy  
   
 
 
@@ -96,6 +108,11 @@ class tCXY():
     @property
     def brd(self):
         return self.__brd
+    
+
+    @property
+    def scale(self):
+        return self.__scale
     
 
     @property
@@ -131,9 +148,15 @@ class tCXY():
             x=self.__brd.y
             y=self.__brd.x
         return f'{round(sc*self.__scale*x)}x{round(sc*self.__scale*y)}'    
-    
 
-    def tr(self,xy):
+
+    def tr_angle(self,ang):
+        ret_angle=(ang+self.__angle)%360
+        if self.__side=='B':
+            ret_angle=(360-((360+self.__angle-ang)%360))%360
+        return ret_angle
+       
+    def tr_nscale(self,xy):
         x=0
         y=0
         if(self.__side=='F'):
@@ -168,10 +191,21 @@ class tCXY():
                     y=xy.x
                 case _:
                     print('ВНИМАНИЕ! Ошибка угла поворота платы side B *********************************')                 
-        x=round(x*self.__scale)   
-        y=round(y*self.__scale)   
         return CXY(x,y)           
 
+
+    def tr(self,ixy):
+        xy=self.tr_nscale(ixy)                 
+        x=round(xy.x*self.__scale)   
+        y=round(xy.y*self.__scale)   
+        return CXY(x,y)           
+    
+    def tr_plt_nscale(self,ixy,rnd=7):
+        xy=self.tr_nscale(ixy)
+        x=round(xy.x,rnd)   
+        y=round(self.__brd.y-xy.y,rnd)   
+        return CXY(x,y)           
+    
 
     def lvector(self,xy,lny=True):
         #print (xy)

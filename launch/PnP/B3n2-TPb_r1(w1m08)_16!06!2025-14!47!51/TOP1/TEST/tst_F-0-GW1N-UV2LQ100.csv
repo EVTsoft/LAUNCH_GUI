@@ -1,0 +1,4 @@
+Designator,Footprint,Center-X(mm),Center-Y(mm),Layer,Rotation,Comment
+m1,MARK_PIX,0.0,0.0,T,0,rep1
+m2,MARK_PIX,66.8,24.7,T,0,rep3
+DD6,LQFP-100,10.7,16.2,T,90,GW1N-UV2LQ100

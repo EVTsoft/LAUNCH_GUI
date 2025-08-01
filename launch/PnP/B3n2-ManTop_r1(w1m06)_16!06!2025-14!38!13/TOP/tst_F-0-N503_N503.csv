@@ -1,0 +1,4 @@
+Designator,Footprint,Center-X(mm),Center-Y(mm),Layer,Rotation,Comment
+m1,MARK_PIX,0.0,0.0,T,0,rep1
+m2,MARK_PIX,134.8,28.4,T,0,rep3
+R1,R0603,36.0,6.6,T,270,0-5%

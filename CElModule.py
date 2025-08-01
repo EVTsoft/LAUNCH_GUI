@@ -15,6 +15,7 @@ import os
 import pprint
 from tkinter import *
 from CModDraw import CModDraw
+from itertools import zip_longest
 
 class CElModule():
     """ Класс электронного модуля"""
@@ -189,6 +190,9 @@ class CElModule():
         if len(self.__var_vk)==0 : self.__var_vk[0]=CSpecification()
         self.__l_isp=[k for k in self.__var_vk.keys()]
         self.__l_isp.sort()      # Сортированное множество целых - присутствующие в модуле номера исполнений
+        #if os.path.exists(self.__NFPICK):
+            #os.remove(self.__NFPICK)
+            #print(f"Удален pick файл -{self.__NFPICK}")
         with open(self.__NFPICK, "wb") as fpick:
             pickle.dump(self,fpick)
              
@@ -205,56 +209,191 @@ class CElModule():
 
     
     # Отчет по монтажу SMD компонент
-    def RepSMDprm(self,nIsp,side,angle=0):
-        SCALE=20
+    # Специальны коммент
+    def RepSMDprm(self,nIsp,side,angle=0,scl=10,max_nz=60,tst=False):
+        SCALE=scl
         sp=self.GetIsp(nIsp)
         #----------------------
-        #for el in sp: print(el)
-        #----------------------
         retSMT=sp.rep_SMD_nozzle()
-        #print(retSMT[0])   
         #----------------------
+        print(f'Размер печатной платы: {self.__SizeBrd} mm.')
         c=tCXY(SCALE,self.__SizeBrd,side,angle)
         # Объект графического отображения       
         CMDraw=CModDraw(self.__ModName,c)
         #----------------------
+         # Поиск, вывод и сортировка реперных знаков
+        all_list_rep=[]
+        spREP=sp.rep_Rep()
+        for rep in spREP:
+            lst_rep=[dz for dz in self.__PerEl[rep.UID] if (dz.Layer==side) | (rep.mt.fp[:5]=='REP-D')]
+            all_list_rep+=lst_rep
+            for dz_rep in  lst_rep:
+                 CMDraw.RepDraw(dz_rep,1.)
+        all_list_rep.sort(key=lambda d : c.lvector(d.XY))
+        m1=all_list_rep[0]
+        CMDraw.set0plt(m1.XY)
+        m2=all_list_rep[-1]
+        CMDraw.RepFL(CXY(1.1,1.1),m1,m2)  
+        First_str=f'Designator,Footprint,Center-X(mm),Center-Y(mm),Layer,Rotation,Comment'
+        nxy=c.tr_plt_nscale(m1.XY)
+        Rep1_xy=c.tr_plt_nscale(m1.XY).norm_round(nxy)
+        Rep2_xy=c.tr_plt_nscale(m2.XY).norm_round(nxy)
+        Rep1_str=f'm1,MARK_PIX,{Rep1_xy.x},{Rep1_xy.y},T,{c.tr_angle(m1.Angle):g},{m1.Des}'
+        Rep2_str=f'm2,MARK_PIX,{Rep2_xy.x},{Rep2_xy.y},T,{c.tr_angle(m2.Angle):g},{m2.Des}'
+        #---------------------- 
+        print('\n') 
+        Noz_El_vk={}
         # Вывод элементов по дезигнаторам
         for nozzle in retSMT[1].keys():
             # Перебераем головки установщика 
-            print(f'>>{nozzle} - ',end="") 
-            i=0
-            for i,el in enumerate(retSMT[1][nozzle]):
+            Noz_El_vk[nozzle]=[]
+            for el in retSMT[1][nozzle]:
                 # Для каждой головки итерируем список компоненнтов
                 #print('   ',el)
+                el_str=el.mt.fp.strip().replace(' ','_')
+                el_ft=el.prm_type()
+                #print(el_ft)
                 for dz in self.__PerEl[el.UID]:
                     # Для каждого компонента итерируем список дезигнаторов
                     if dz.Layer==side : # Отсекаем те, которые находятся не на выводимой стороне.
                         #print('                       ',dz)
-                        CMDraw.DzDraw(dz,CXY(el.mt.x,el.mt.y)/2.,nozzle)
-            #else:
-                #print (f'Всего к установке типов компонент: {i+1}')            
+                        delXY=c.tr_plt_nscale(dz.XY).norm_round(nxy)
+                        Noz_El_vk[nozzle].append(str(f'{dz.Des},{el_str},{delXY.x},{delXY.y},T,{c.tr_angle(dz.Angle):g},{el_ft}'))
+                        CMDraw.DzDraw(dz,CXY(el.mt.x,el.mt.y)/2.,nozzle)   
+                        if tst: # Если это генерация тестовой программы, то выходим после одного дезигнатора на компонент
+                            break    
+            kel=len(Noz_El_vk[nozzle])
+            if kel==0: del Noz_El_vk[nozzle]              
+            print(f'На головке-{nozzle} всего элементов: {kel}')                    
         #--------------
-        # Поиск, вывод и сортировка реперных знаков
-        spREP=sp.rep_Rep()
-        #print (len(spREP))
-        for rep in spREP:
-            #print(rep)#,'   ',rep.mt.fp[:5])
-            lst_rep=[dz for dz in self.__PerEl[rep.UID] if (dz.Layer==side) | (rep.mt.fp[:5]=='REP-D')]
-            for dz_rep in  lst_rep:
-                #print(dz_rep)
-                CMDraw.RepDraw(dz_rep,1.)
-            lst_rep.sort(key=lambda d : c.lvector(d.XY))
-            #print('')
-            #for dd in lst_rep: print (dd)
-            CMDraw.RepFL(CXY(1.1,1.1),lst_rep[0],lst_rep[-1])  
-            #print(self.__SizeBrd)   
+        # Подготовка массива пар головок
+        MNoz=[]
+        lst_nz=[]
+        for nzll in Noz_El_vk.keys():
+            lst_nz.append((nzll,len(Noz_El_vk[nzll])))
+        lst_nz.sort(key=lambda i : i[1],reverse=True)
+        #pprint.pprint(lst_nz)
+        # отсортированный по элементам список головок
+        nchet=len(lst_nz)%2
+        iterator=iter(lst_nz)
+        for nzp in iterator:
+            if (nzp[1]>=max_nz) | (nchet==1):
+                # Превышен порог в головке или у нас нечетное число головок
+                nchet=(nchet+1)%2
+                MNoz.append((nzp[0],nzp[0]))
+            else:
+                MNoz.append((nzp[0],next(iterator)[0]))   
+        #pprint.pprint(MNoz)
+        print(f'Будут сгенерированны программы для следующих пар головок - {MNoz}')             
+        #--------------
+        if(len(MNoz)!=0):
+            # Генерация программы для установщика SMD
+            DirName=f'{self.__metadata['title']}.{self.__metadata['revision']}'.replace('.','(') +f')_{self.__metadata['date']}'.replace(' ','-').replace(':','!').replace('.','!')
+            print(f'Каталог модуля: \"{DirName}\"')
+            for N_Prm in MNoz:
+                # Проверка наличия очередной пары головок в программе установщика
+                if all(k in Noz_El_vk for k in N_Prm):
+                    NamePrm=side+f'-{angle}'+'-'+N_Prm[0]+'_'+N_Prm[1]
+                    if tst:
+                        NamePrm='tst_'+NamePrm
+                    print(f'\nГенерация программы установщика PnP {NamePrm}')
+                    N0_lst=[]
+                    N1_lst=[]
+                    # Для каждой пары головок
+                    if(N_Prm[0]!=N_Prm[1]):
+                        # Отработка разных головок
+                        N0_lst=Noz_El_vk[N_Prm[0]].copy()
+                        N1_lst=Noz_El_vk[N_Prm[1]].copy()
+                        print(f'Всего элементов: {len(N0_lst)+len(N1_lst)}. На головке-{N_Prm[0]} ({len(N0_lst)}) и головке-{N_Prm[1]} ({len(N1_lst)})')
+                    else:
+                        # Отработка одинаковых головок
+                        nz_keys=N_Prm[0]
+                        prev_el0=''
+                        i_el0=0
+                        prev_el1=''
+                        i_el1=0
+                        for elstr in Noz_El_vk[nz_keys]:
+                            def addel(lst, i):
+                                lst.append(elstr.strip())
+                                return i+1
+                            els=elstr.split(',')
+                            el=els[1]+'_'+els[6]
+                            #print(el)
+                            if   el==prev_el0 : i_el0=addel(N0_lst,i_el0)
+                            elif el==prev_el1 : i_el1=addel(N1_lst,i_el1)
+                            else:
+                                if i_el0<=i_el1 :
+                                    prev_el0=el
+                                    i_el0=addel(N0_lst,i_el0)  
+                                else:
+                                    prev_el1=el
+                                    i_el1=addel(N1_lst,i_el1)
+                        print(f'Всего элементов: {i_el0+i_el1} на головке-{nz_keys}')
+                    # Генерация непосредственно программы для станка  
+                    str_prm=[str(First_str),str(Rep1_str),str(Rep2_str)]
+                    for crt in zip_longest(N0_lst, N1_lst): 
+                        def out(ct):
+                            if ct!=None:
+                                str_prm.append(ct)
+                        out(crt[0])
+                        out(crt[1])    
+                    #----------------------------------
+                    # Запись созданной программы на диск
+                    nside='/TOP'+str(nIsp)
+                    if side=='B': nside='/BOTTOM'+str(nIsp)
+                    if tst:
+                        NameDir=self.__ModDir+'PnP/'+ DirName+nside+'/TEST'
+                    else:
+                        NameDir=self.__ModDir+'PnP/'+ DirName+nside
+                    NozNameDir=self.__ModDir+'PnP/'+ DirName+nside+'/NOZZLE'
+                    FullName=NameDir+'/'+NamePrm+'.csv'
+                    print(FullName)
+                    if not os.path.exists(NameDir):
+                        os.makedirs(NameDir)
+                    if not os.path.exists(NozNameDir):    
+                        os.makedirs(NozNameDir)
+                    with open(FullName, "w",encoding='utf-8') as fprm: 
+                        for sp in str_prm:
+                            fprm.write(sp)
+                            fprm.write('\n')
+                    #----------------------------------
+                    # Вывести в  txt файл расклад компонент по головкам
+                    if not tst:
+                        rasklad_nz=[]
+                        rasklad_nz.append(f'\nНа головке №1 - {N_Prm[0]} Следующие компоненты:')
+                        els_0=list(set([el.split(',')[1]+' '+el.split(',')[6] for el in N0_lst]))
+                        els_0.sort()
+                        rasklad_nz+=els_0
+                        rasklad_nz.append(f'\nНа головке №2 - {N_Prm[1]} Следующие компоненты:')
+                        els_1=list(set([el.split(',')[1]+' '+el.split(',')[6] for el in N1_lst]))
+                        els_1.sort()
+                        rasklad_nz+=els_1
+                        FullNameNz=NozNameDir+'/'+NamePrm+'.txt'
+                        with open(FullNameNz, "w",encoding='utf-8') as fprm: 
+                            for sp in rasklad_nz:
+                                fprm.write(sp)
+                                fprm.write('\n')      
+                    else:
+                        # Гененрация программы теста одного компонента, если это не R,L,C
+                        for i in range(3,len(str_prm)):
+                            elt=str_prm[i].split(',')
+                            if (elt[0][0]!='R') & (elt[0][0]!='C') & (elt[0][0]!='L') :
+                                NameTstElFile=NameDir+'/'+NamePrm[:-9]+elt[6]+'.csv'
+                                with open(NameTstElFile, "w",encoding='utf-8') as fprm: 
+                                    fprm.write(str_prm[0])
+                                    fprm.write('\n')    
+                                    fprm.write(str_prm[1])
+                                    fprm.write('\n')    
+                                    fprm.write(str_prm[2])
+                                    fprm.write('\n')
+                                    fprm.write(str_prm[i])
+                                    fprm.write('\n')   
+                else:
+                    print('Указаны отсутствующие в словаре модуля головки-{N_Prm}. Генерация программы установщика PnP прервана.')
         #--------------
         CMDraw.RootLoop()
         #
         return
-
-
-        
 
 
 #======================================================================================================================= Тест ==
@@ -263,34 +402,38 @@ class CElModule():
 def main():
     # Получение списка файлов для обработки 
     LAUNCHDIR = 'launch'
-    #LAUDIR = "./"+LAUNCHDIR+"/"
-    #nfile ='B3n2-MMI_IBOM_r1.html'
-    #nfile='B3n2-Cross_IBOM_r1.html'
-    #nfile='B3n2-TU_IBOM_r1.html'
-    #nfile='C:/Users/tyurine.TEAMR2/Desktop/Python/GItHubUtilMain/launch/B3n2-TPb_IBOM_r1.html'
-    #nfile='B3n2-MeasUDiv_IBOM_r1.html'
 
-    nmodule='B3n2-DC-DC_r1'#.html'
-    #nmodule='B3n2-ManBot_r1'#.html'
-    #nmodule='B3n2-MeasUDiv_r1'#.html'
-
-    #nfile='TestIBOM_TSU33702.html'
-    #nfile='TestIBOM_TSU33701.html'
-    #nfile='B3n2-IntMain_IBOM_r1.html'
-    #nfile ='C:/Users/tyurine.TEAMR2/Desktop/Python/GItHubUtilMain/launch2/TestIBOM_TSU33701.html'
-    #nfile ='C:/Users/tyurine.TEAMR2/Desktop/Python/GItHubUtilMain/launch2/TestIBOM_TSU33702.html'
-    #nfile='C:/Users/tyurine.TEAMR2/Desktop/Python/GItHubUtilMain/launch/AC-DC-LS10_IBOM_r1.html'
-    #spec=CElModule.Pick(nmodule,LAUNCHDIR)
-    spec=CElModule(nmodule,LAUNCHDIR)
-    #spec.RepDz()
+    #nmodule='B3n2-DC-DC_r1'
+    #nmodule='B3n2-ManBot_r1'
+    #nmodule='B3n2-ManTop_r1'
+    #nmodule='B3n2-LD_r1'
+    #nmodule='B3n2-MeasUDiv_r1'
+    #nmodule='B3n2-TU_r1'
+    nmodule='B3n2-TPb_r1'
+    spec=CElModule.Pick(nmodule,LAUNCHDIR)
+    #spec=CElModule(nmodule,LAUNCHDIR)
 
 
-    #spec.RepSMDprm(0,'F')
+    spec.RepSMDprm(0,'F',0,15)
+    spec.RepSMDprm(0,'F',0,15,60,True)
+    spec.RepSMDprm(1,'F',0,15)
+    spec.RepSMDprm(1,'F',0,15,60,True)
+    spec.RepSMDprm(0,'F',180,15)
+    spec.RepSMDprm(0,'F',180,15,60,True)
+    spec.RepSMDprm(1,'F',180,15)
+    spec.RepSMDprm(1,'F',180,15,60,True)
     #spec.RepSMDprm(0,'F',90)
     #spec.RepSMDprm(0,'F',180)
     #spec.RepSMDprm(0,'F',270)
-    spec.RepSMDprm(0,'B')
-    #spec.RepSMDprm(0,'B',90)
+    #spec.RepSMDprm(0,'B')
+    spec.RepSMDprm(0,'B',270,15)
+    spec.RepSMDprm(0,'B',270,15,60,True)
+    spec.RepSMDprm(1,'B',270,15)
+    spec.RepSMDprm(1,'B',270,15,60,True)
+    spec.RepSMDprm(0,'B',90,15)
+    spec.RepSMDprm(0,'B',90,15,60,True)
+    spec.RepSMDprm(1,'B',90,15)
+    spec.RepSMDprm(1,'B',90,15,60,True)
     #spec.RepSMDprm(0,'B',180)
     #spec.RepSMDprm(0,'B',270)
     
