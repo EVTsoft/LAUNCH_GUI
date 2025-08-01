@@ -69,6 +69,7 @@ class ActionButton(QToolButton):
 #         self.setLayout(v_box)
 
 
+
 class MyDelegate(QItemDelegate):
     def createEditor(self, parent, option, index):
         if index.column() == 1:
