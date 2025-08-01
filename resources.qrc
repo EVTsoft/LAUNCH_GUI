@@ -5,5 +5,10 @@
         <file alias="mod.png">mod.png</file>
         <file alias="pack_type.png">pack_type.png</file>
         <file alias="stanok.png">stanok.png</file>
+        <file alias="plus.png">plus.png</file>
+        <file alias="font.png">font.png</file>
+        <file alias="save.png">save.png</file>
+        <file alias="close.png">close.png</file>
+        <file alias="move.png">move.png</file>
     </qresource>
 </RCC>
